@@ -1,0 +1,3 @@
+# Configuracion de gitleaks (adenda de implementacion 1: ningun secreto en el repositorio). Reglas por defecto.
+[extend]
+useDefault = true

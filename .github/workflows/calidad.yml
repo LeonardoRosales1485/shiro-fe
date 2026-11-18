@@ -1,0 +1,75 @@
+# Integracion continua de shiro-fe (T0.6 del plan, umbrales de "Criterios de calidad" y adenda de implementacion 1).
+# Cada job es un check que se exige en la proteccion de la rama develop: si falla, el PR no se integra.
+name: Calidad
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [develop, staging, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: calidad-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pruebas:
+    name: Lint, tipos, pruebas, duplicados y build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: ESLint
+        run: npm run lint
+      - name: Tipos de TypeScript
+        run: npm run typecheck
+      # Vitest con Testing Library; la cobertura del front se informa, sin umbral
+      - name: Pruebas con cobertura
+        run: npm run test:cobertura
+      - name: Codigo duplicado (jscpd, 50 tokens)
+        run: npm run duplicados
+      - name: Build
+        run: npm run build
+      - name: Reporte de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-front
+          path: coverage/
+          if-no-files-found: ignore
+
+  dependencias:
+    name: Dependencias vulnerables (OSV-Scanner)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Falla con cualquier vulnerabilidad conocida; las bajas o medias sin arreglo se ignoran en osv-scanner.toml
+      - name: OSV-Scanner
+        run: docker run --rm -v "$PWD:/repo" -w /repo ghcr.io/google/osv-scanner:v2.7.1 scan source --lockfile package-lock.json
+
+  analisis-estatico:
+    name: Analisis estatico (Semgrep)
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep:1.186.0
+    steps:
+      - uses: actions/checkout@v4
+      - name: Semgrep
+        run: semgrep scan --config p/typescript --config p/react --config p/owasp-top-ten --severity ERROR --error --metrics off
+
+  secretos:
+    name: Secretos (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        run: docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.30.1 git /repo --config /repo/.gitleaks.toml --redact --no-banner

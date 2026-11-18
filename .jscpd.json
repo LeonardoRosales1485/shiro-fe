@@ -1,0 +1,10 @@
+{
+  "minTokens": 50,
+  "threshold": 0,
+  "path": ["src"],
+  "format": ["typescript", "tsx", "javascript"],
+  "ignore": ["**/*.test.tsx", "**/*.test.ts", "**/pruebas/**"],
+  "reporters": ["console"],
+  "exitCode": 1,
+  "absolute": false
+}

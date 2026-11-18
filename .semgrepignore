@@ -1,0 +1,8 @@
+# Semgrep: lo que no se analiza. Reemplaza la lista por defecto, por eso se repiten sus entradas.
+.git/
+node_modules/
+dist/
+coverage/
+# Deployer de sm-template: por regla no se modifica en el proyecto. Sus hallazgos se reportan a quien mantiene la
+# plantilla
+deploy/
