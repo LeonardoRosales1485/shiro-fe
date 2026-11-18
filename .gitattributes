@@ -1,0 +1,9 @@
+# Fin de linea LF en el repositorio y en la copia de trabajo, tambien en Windows
+* text=auto eol=lf
+# Scripts de Windows con CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+# Binarios
+*.jar binary
+*.png binary
+*.woff2 binary
