@@ -1,0 +1,117 @@
+/* Generado por scripts/generar-tokens.mjs desde tokens.json. No editar a mano. */
+@font-face {
+  font-family: 'Montserrat';
+  src: url('./fuentes/Montserrat.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-card: 0.8rem;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --menu-ancho-riel: 72px;
+  --menu-ancho-expandida: 280px;
+  --barra-alto: 56px;
+  --control-alto-tactil: 44px;
+  --foco-desfase: 2px;
+  --font-sans: 'Montserrat', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+:root, [data-theme="light"] {
+  --app-background: #f3f6fa;
+  --surface: #ffffff;
+  --surface-hover: #f6f8fb;
+  --surface-elevated: #ffffff;
+  --text: #172033;
+  --muted: #667085;
+  --placeholder: #6b727e;
+  --border: #e5eaf1;
+  --border-strong: #cdd6e3;
+  --on-color: #ffffff;
+  --velo: rgba(15, 23, 42, 0.45);
+  --primary: #255c9d;
+  --primary-solid: #255c9d;
+  --primary-soft: #e7f0fb;
+  --primary-text: #173b72;
+  --success: #25835b;
+  --success-soft: #dcfce7;
+  --success-text: #166534;
+  --warning: #d48a1b;
+  --warning-soft: #fef3c7;
+  --warning-text: #92400e;
+  --danger: #c43d4b;
+  --danger-soft: #fee2e2;
+  --danger-text: #991b1b;
+  --danger-solid: #c43d4b;
+  --info: #0b7fb8;
+  --info-soft: #e0f2fe;
+  --info-text: #075985;
+  --neutral-text: #344054;
+  --neutral-solid: #667085;
+  --violet-soft: #ede9fe;
+  --violet-text: #5b21b6;
+  --slate-soft: #e2e8f0;
+  --slate-text: #334155;
+  --sand-soft: #f3eee3;
+  --sand-text: #5a4a2e;
+  --table-header: #e2edfb;
+  --table-row-alt: #edf4fc;
+  --shadow: 0 10px 30px rgba(30, 55, 90, 0.08);
+  --shadow-sm: 0 4px 14px rgba(30, 55, 90, 0.07);
+  --anillo-foco: 0 0 0 1px #255c9d, 0 0 0 3px #e7f0fb;
+}
+
+[data-theme="dark"] {
+  --app-background: #0b0d11;
+  --surface: #171b22;
+  --surface-hover: #1f2530;
+  --surface-elevated: #202631;
+  --text: #e6e9f2;
+  --muted: #aab2c0;
+  --placeholder: #818c9d;
+  --border: #2b313d;
+  --border-strong: #3b4555;
+  --on-color: #ffffff;
+  --velo: rgba(15, 23, 42, 0.45);
+  --primary: #8bb3ff;
+  --primary-solid: #255c9d;
+  --primary-soft: #1b2a4a;
+  --primary-text: #b9d0ff;
+  --success: #4fc38a;
+  --success-soft: #143527;
+  --success-text: #8ce0b5;
+  --warning: #f0ad4e;
+  --warning-soft: #3c2b13;
+  --warning-text: #ffd188;
+  --danger: #ef6677;
+  --danger-soft: #412027;
+  --danger-text: #ff9ba8;
+  --danger-solid: #c9414f;
+  --info: #5bbcf5;
+  --info-soft: #10304a;
+  --info-text: #8fd3ff;
+  --neutral-text: #d0d5dd;
+  --neutral-solid: #667085;
+  --violet-soft: #2b2150;
+  --violet-text: #cdbcff;
+  --slate-soft: #232b38;
+  --slate-text: #c7d2e0;
+  --sand-soft: #2e2a22;
+  --sand-text: #d9cdb4;
+  --table-header: #1a2940;
+  --table-row-alt: #141d29;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.32);
+  --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.28);
+  --anillo-foco: 0 0 0 1px #8bb3ff, 0 0 0 3px #1b2a4a;
+}
