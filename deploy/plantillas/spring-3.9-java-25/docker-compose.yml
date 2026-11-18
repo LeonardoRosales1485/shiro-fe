@@ -1,0 +1,33 @@
+name: ${CONTAINER_NAME}
+
+# Spring Boot 4.1 + Java 25 sin contenedor de base de datos: la base es externa y la conexion llega por
+# SPRING_DATASOURCE_URL / SPRING_DATASOURCE_USERNAME / SPRING_DATASOURCE_PASSWORD en el bloque env: de deploy.yml
+# (ej. malvinas2, base en 192.168.100.13).
+services:
+  app:
+    image: ${CONTAINER_NAME}:latest
+    build:
+      context: ../../..
+      dockerfile: deploy/plantillas/spring-3.9-java-25/Dockerfile
+    container_name: ${CONTAINER_NAME}
+    restart: ${RESTART_POLICY:-unless-stopped}
+    ports:
+      - "${EXTERNAL_PORT}:${INTERNAL_PORT}"
+    env_file:
+      - path: ../../runtime.env
+        required: false
+    volumes:
+      - type: bind
+        source: ${APPLICATION_PROPERTIES_FILE}
+        target: /config/application.properties
+        read_only: true
+      - ${LOGS_VOLUME:-/var/log}/${CONTAINER_NAME}:/app/logs
+    environment:
+      TZ: America/Argentina/Buenos_Aires
+      JAVA_TOOL_OPTIONS: -Duser.timezone=America/Argentina/Buenos_Aires
+      SERVER_PORT: ${INTERNAL_PORT}
+      SPRING_CONFIG_LOCATION: optional:file:/config/application.properties
+      LOGGING_FILE_PATH: /app/logs
+      LOGGING_FILE_BASENAME: ${CONTAINER_NAME}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect

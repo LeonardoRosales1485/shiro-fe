@@ -1,0 +1,12 @@
+version: 1.1
+
+# Antes de modificar leer la documentacion `deploy/deploy.md`
+# Puerto provisorio (7091) hasta que el lider tecnico asigne los de Shiro.
+
+local:
+  shiro-fe:
+    port: 7091
+    stack: simple
+    env:
+      RESTART_POLICY: "no"
+    composer_file: vite-react-node-22/docker-compose.yml
