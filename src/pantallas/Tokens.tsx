@@ -1,6 +1,6 @@
 // Tokens MCP (T6.4, prototipos "Tokens MCP" y "Generar token"): los tokens de acceso personales del usuario para que
-// su LLM opere Shiro por MCP con sus mismos permisos. Generar muestra el token una sola vez para copiarlo; revocar
-// lo desactiva al instante. Explica cómo conectar el cliente MCP.
+// su LLM opere Shiro por MCP con sus mismos permisos, también los revocados, con su último uso (propuesta 50). Generar
+// muestra el token una sola vez para copiarlo; revocar lo desactiva al instante. Explica cómo conectar el cliente MCP.
 import { useEffect, useId, useState } from 'react';
 import { mensajeDeError, pedir } from '../api/cliente';
 import { fecha } from '../componentes/catalogos';
@@ -12,7 +12,11 @@ import { useEnvio } from '../componentes/useEnvio';
 
 type Props = { nombreDelUsuario: string };
 
-type Token = { uuid: string; nombre: string; activo: number; fechaDeCreacion: string | null; codigo: string | null };
+// Token en la lista (GET /usuario/mis-tokens): tambien los revocados, con su ultimo uso
+type Token = { uuid: string; nombre: string; activo: boolean; fechaDeCreacion: string | null; fechaDeRevocacion: string | null; ultimoUso: string | null };
+
+// Token recien creado (POST /usuario/crear-token): trae el token en claro una sola vez
+type TokenCreado = { uuid: string; nombre: string; codigo: string | null };
 
 // Direccion del servidor MCP de este Shiro (el backend se publica en /api, bajo la misma base que el front)
 const URL_MCP = `${window.location.origin}${import.meta.env.BASE_URL.replace(/\/$/, '')}/api/mcp`;
@@ -22,13 +26,13 @@ export function Tokens({ nombreDelUsuario }: Props) {
   const [errorDeCarga, setErrorDeCarga] = useState<string | null>(null);
   const [vuelta, setVuelta] = useState(0);
   const [generando, setGenerando] = useState(false);
-  const [nuevo, setNuevo] = useState<Token | null>(null);
+  const [nuevo, setNuevo] = useState<TokenCreado | null>(null);
   const [aRevocar, setARevocar] = useState<Token | null>(null);
   const { aviso, setAviso, error, setError } = useAccion(() => setVuelta((v) => v + 1));
 
   useEffect(() => {
     let vigente = true;
-    pedir<Token[]>('GET', '/usuario/tokens')
+    pedir<Token[]>('GET', '/usuario/mis-tokens')
       .then((leidos) => vigente && setTokens(leidos))
       .catch((e) => vigente && setErrorDeCarga(mensajeDeError(e)));
     return () => {
@@ -69,14 +73,15 @@ export function Tokens({ nombreDelUsuario }: Props) {
           {tokens && tokens.length > 0 && (
             <div className="ui-table-wrap">
               <table className="ui-table" aria-label="Tokens">
-                <thead><tr><th>Nombre</th><th>Creado</th><th>Estado</th><th><span className="sh-sr">Acciones</span></th></tr></thead>
+                <thead><tr><th>Nombre</th><th>Creado</th><th>Último uso</th><th>Estado</th><th><span className="sh-sr">Acciones</span></th></tr></thead>
                 <tbody>
                   {tokens.map((t) => (
                     <tr key={t.uuid}>
                       <td>{t.nombre}</td>
                       <td>{fecha(t.fechaDeCreacion)}</td>
-                      <td>{t.activo === 1 ? 'Activo' : 'Revocado'}</td>
-                      <td>{t.activo === 1 && (
+                      <td>{t.ultimoUso ? fecha(t.ultimoUso, true) : '—'}</td>
+                      <td>{t.activo ? 'Activo' : `Revocado${t.fechaDeRevocacion ? ` el ${fecha(t.fechaDeRevocacion)}` : ''}`}</td>
+                      <td>{t.activo && (
                         <button className="ui-btn ghost sm" type="button" aria-label={`Revocar ${t.nombre}`} onClick={() => setARevocar(t)}>Revocar</button>
                       )}</td>
                     </tr>
@@ -94,7 +99,7 @@ export function Tokens({ nombreDelUsuario }: Props) {
         </section>
       </div>
       {generando && (
-        <GenerarTokenModal alCerrar={() => setGenerando(false)} alGenerar={(token) => {
+        <GenerarTokenModal alCerrar={() => setGenerando(false)} alGenerar={(token: TokenCreado) => {
           setGenerando(false);
           setNuevo(token);
           setVuelta((v) => v + 1);
@@ -103,8 +108,8 @@ export function Tokens({ nombreDelUsuario }: Props) {
       {aRevocar && (
         <RevocarTokenModal token={aRevocar} alCerrar={() => setARevocar(null)} alRevocar={() => {
           setAviso(`Se revocó «${aRevocar.nombre}». Deja de funcionar al instante.`);
-          setTokens((actuales) => actuales?.filter((t) => t.uuid !== aRevocar.uuid) ?? null);
           setARevocar(null);
+          setVuelta((v) => v + 1);
         }} />
       )}
     </>
@@ -112,11 +117,11 @@ export function Tokens({ nombreDelUsuario }: Props) {
 }
 
 // Generar un token: pide el nombre (unico entre los tokens del usuario)
-function GenerarTokenModal({ alGenerar, alCerrar }: { alGenerar: (token: Token) => void; alCerrar: () => void }) {
+function GenerarTokenModal({ alGenerar, alCerrar }: { alGenerar: (token: TokenCreado) => void; alCerrar: () => void }) {
   const id = useId();
   const [nombre, setNombre] = useState('');
   const { enviando, error, enviar } = useEnvio();
-  const generar = () => enviar(async () => alGenerar(await pedir<Token>('POST', '/usuario/crear-token', { nombre: nombre.trim() })));
+  const generar = () => enviar(async () => alGenerar(await pedir<TokenCreado>('POST', '/usuario/crear-token', { nombre: nombre.trim() })));
   const pie = <>
     <button className="ui-btn ghost" type="button" onClick={alCerrar}>Cancelar</button>
     <button className="ui-btn solid" type="button" disabled={!nombre.trim() || enviando} onClick={generar}>Generar token</button>
