@@ -1,6 +1,6 @@
 // Backlog y sprints de un proyecto (T6.3, prototipos "Backlog", "Crear sprint", "Cerrar sprint" y "Sprint cerrado"):
 // los sprints abiertos (el activo con su avance y los planificados), el backlog en su orden único y, a pedido, los
-// sprints cerrados con sus tareas. Desde acá se crean, inician, cierran y archivan sprints y se mueven tareas.
+// sprints cerrados con su cierre (quién, cuándo y qué pasó con cada tarea). Desde acá se crean, inician, cierran y archivan sprints y se mueven tareas.
 import { useEffect, useState } from 'react';
 import { mensajeDeError, pedir } from '../api/cliente';
 import {
@@ -13,6 +13,7 @@ import { AlertaDeError } from '../componentes/Modal';
 import { useAccion } from '../componentes/useAccion';
 import { ListaDeBacklog } from './planificacion/ListaDeBacklog';
 import { CerrarSprintModal, CrearSprintModal } from './planificacion/ModalesDeSprint';
+import { SprintCerrado } from './planificacion/SprintCerrado';
 import { TarjetaDeSprint } from './planificacion/TarjetaDeSprint';
 
 type Props = { proyecto: ProyectoDTO; tiposDeTablero: TipoTableroDTO[] };
@@ -45,9 +46,8 @@ export function Planificacion({ proyecto, tiposDeTablero }: Props) {
   const [vuelta, setVuelta] = useState(0);
   const [verCerrados, setVerCerrados] = useState(false);
   const [cerradoElegido, setCerradoElegido] = useState<string | null>(null);
-  const [tareasDelCerrado, setTareasDelCerrado] = useState<{ sprint: string; tareas: TareaDePlanDTO[] } | null>(null);
   const [modal, setModal] = useState<Modal>(null);
-  const { ocupado, aviso, setAviso, error, setError, ejecutar } = useAccion(() => setVuelta((v) => v + 1));
+  const { ocupado, aviso, setAviso, error, ejecutar } = useAccion(() => setVuelta((v) => v + 1));
   const terminados = estadosTerminados(tiposDeTablero);
 
   useEffect(() => {
@@ -63,18 +63,6 @@ export function Planificacion({ proyecto, tiposDeTablero }: Props) {
   const cerrados = (datos?.sprints ?? []).filter((s) => s.estado === 'CERRADO').sort((a, b) => b.inicio.localeCompare(a.inicio));
   const cerrado = verCerrados ? cerrados.find((s) => s.uuid === cerradoElegido) ?? cerrados[0] ?? null : null;
 
-  // Las tareas del sprint cerrado que se esta viendo se piden al elegirlo
-  useEffect(() => {
-    if (!cerrado) return;
-    let vigente = true;
-    tareasDe(cerrado.uuid)
-      .then((tareas) => vigente && setTareasDelCerrado({ sprint: cerrado.uuid, tareas }))
-      .catch((e) => vigente && setError(mensajeDeError(e)));
-    return () => {
-      vigente = false;
-    };
-  }, [cerrado, setError]);
-
   if (errorDeCarga) return <AlertaDeError mensaje={`No se pudo cargar la planificación. ${errorDeCarga}`} />;
   if (!datos) return <div className="ui-row ui-muted" role="status"><span className="ui-spinner" aria-hidden="true" />Cargando la planificación...</div>;
 
@@ -85,10 +73,6 @@ export function Planificacion({ proyecto, tiposDeTablero }: Props) {
     <TarjetaDeSprint key={sprint.uuid} proyecto={proyecto} sprint={sprint} tareas={tareas} terminados={terminados} activo={activo} ocupado={ocupado}
       alCerrar={() => setModal({ tipo: 'cerrar', sprint })}
       alIniciar={() => ejecutar(() => pedir('POST', `/sprint/${sprint.uuid}/iniciar`), `Empezó ${sprint.nombre}.`)}
-      alArchivar={() => ejecutar(async () => {
-        await pedir('POST', `/sprint/${sprint.uuid}/archivar`);
-        setCerradoElegido(null);
-      }, `Se archivó ${sprint.nombre}.`)}
       alSacar={(tarea) => ejecutar(() => pedir('POST', `/sprint/${sprint.uuid}/quitar`, { tareas: [tarea.uuid] }), `${tarea.clave} volvió al backlog.`)} />
   );
 
@@ -111,7 +95,10 @@ export function Planificacion({ proyecto, tiposDeTablero }: Props) {
                 </select>
               </label>
             )}
-            {tarjeta(cerrado, tareasDelCerrado?.sprint === cerrado.uuid ? tareasDelCerrado.tareas : null)}
+            <SprintCerrado key={cerrado.uuid} proyecto={proyecto} sprint={cerrado} ocupado={ocupado} alArchivar={() => ejecutar(async () => {
+              await pedir('POST', `/sprint/${cerrado.uuid}/archivar`);
+              setCerradoElegido(null);
+            }, `Se archivó ${cerrado.nombre}.`)} />
           </>
         )}
         {abiertos.length === 0 && !cerrado && <p className="ui-muted" style={{ margin: 0 }}>No hay sprints abiertos. Creá uno para empezar a planificar.</p>}

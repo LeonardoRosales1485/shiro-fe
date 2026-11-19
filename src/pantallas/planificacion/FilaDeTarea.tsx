@@ -33,3 +33,15 @@ export function FilaDeTarea({ proyecto, tarea, extra, acciones }: Props) {
 export function puntosDe(tareas: { puntos?: number | null }[]): number {
   return tareas.reduce((total, t) => total + (t.puntos ?? 0), 0);
 }
+
+// Cabecera de la tarjeta de un sprint: nombre (titulo de la seccion), chip de estado y, a la derecha, las acciones
+export function CabeceraDeSprint({ idTitulo, nombre, estado, tono, children }: { idTitulo: string; nombre: string; estado: string; tono: string; children?: ReactNode }) {
+  return (
+    <div className="ui-row">
+      <h2 className="ui-card-title" id={idTitulo}>{nombre}</h2>
+      <span className={`ui-chip ${tono}`}>{estado}</span>
+      <span className="ui-spacer" />
+      {children}
+    </div>
+  );
+}

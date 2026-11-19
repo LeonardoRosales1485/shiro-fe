@@ -109,6 +109,24 @@ export type EstadoDeSprint = 'PLANIFICADO' | 'ACTIVO' | 'CERRADO';
 
 export type SprintDTO = { uuid: string; nombre: string; estado: EstadoDeSprint; inicio: string; fin: string; proyectoUuid: string };
 
+// Cierre de un sprint (GET /sprint/{uuid}/cierre): quien, cuando y la foto de cada tarea al cerrar
+export type SprintCierreDTO = {
+  uuid: string;
+  cerradoPorNombre: string | null;
+  fechaDeCierre: string | null;
+  tareas: {
+    uuid: string;
+    clave: string;
+    titulo: string;
+    tableroCodigo: string | null;
+    estadoAlCerrar: string;
+    terminada: boolean;
+    puntos: number | null;
+    destino: 'TERMINADA' | 'BACKLOG' | 'SPRINT';
+    sprintDestinoNombre: string | null;
+  }[];
+};
+
 // Tarea en un sprint o en el backlog (POST /tarea/paginar o GET /proyecto/{uuid}/backlog): lo que muestran las listas
 export type TareaDePlanDTO = {
   uuid: string;
@@ -122,7 +140,15 @@ export type TareaDePlanDTO = {
   responsableNombre: string | null;
 };
 
-export type VersionDTO = { uuid: string; nombre: string; estado: 'SIN_PUBLICAR' | 'PUBLICADA'; fechaDePublicacion: string | null; proyectoUuid: string };
+export type VersionDTO = {
+  uuid: string;
+  nombre: string;
+  estado: 'SIN_PUBLICAR' | 'PUBLICADA';
+  fechaDePublicacion: string | null;
+  proyectoUuid: string;
+  cantidadDeTareas: number | null;
+  publicadaPorNombre: string | null;
+};
 
 // Tarea de una version (GET /version/{uuid}/tareas)
 export type TareaDeVersionDTO = {
