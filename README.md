@@ -21,6 +21,15 @@
 La guía completa para levantar back, base y front está en
 [`shiro-be/docs/levantar-en-local.md`](https://github.com/LeonardoRosales1485/shiro-be/blob/claude/jolly-newton-jqin42/docs/levantar-en-local.md).
 
+## Versión
+
+La versión de `package.json` empieza en 0.0.1 y sube +0.0.1 en cada push (misma regla que el backend).
+
+## Pendiente de desarrollo
+
+- **Client id de Google:** falta cargar `VITE_GOOGLE_CLIENT_ID` en el build de cada ambiente. Sin él, el botón «Ingresar con Google» queda deshabilitado con un aviso y se entra con cuentas de Shiro.
+- **Puertos locales definitivos:** el front usa 7091 y el backend 7090, provisorios hasta que los asigne el líder técnico.
+
 ## Design system
 
 - `src/estilos/tokens.json`, `bundle.css` y `fuentes/Montserrat.woff2` vienen de bod-prototype-design-system.

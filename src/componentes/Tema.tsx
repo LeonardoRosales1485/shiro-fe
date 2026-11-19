@@ -1,4 +1,5 @@
-// Tema claro u oscuro: se guarda en el navegador (preferencia de la persona) y se aplica con data-theme en <html>.
+// Tema claro u oscuro (oscuro por defecto): se guarda en el navegador (preferencia de la persona) y se aplica con
+// data-theme en <html>.
 import { useSyncExternalStore } from 'react';
 import { Icono } from './Icono';
 
@@ -10,9 +11,9 @@ const CAMBIO = 'shiro:tema';
 
 function temaActual(): Tema {
   try {
-    return window.localStorage.getItem(CLAVE) === 'dark' ? 'dark' : 'light';
+    return window.localStorage.getItem(CLAVE) === 'light' ? 'light' : 'dark';
   } catch {
-    return 'light';
+    return 'dark';
   }
 }
 

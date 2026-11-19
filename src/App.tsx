@@ -1,5 +1,5 @@
-// Aplicacion: consulta la sesion (cookies del backend) y muestra el ingreso o el espacio de trabajo. Un usuario es
-// administrador si puede leer sus propios grupos (solo los administradores pueden).
+// Aplicacion: consulta la sesion (cookies del backend) y muestra el ingreso o el espacio de trabajo. Si es
+// administrador lo dice GET /usuario/sesion/grupos (adenda A12 del diseño técnico).
 import { useCallback, useEffect, useState } from 'react';
 import { pedir } from './api/cliente';
 import type { UsuarioDTO } from './api/tipos';
@@ -13,8 +13,8 @@ type Sesion = { usuario: UsuarioDTO; esAdministrador: boolean };
 async function leerSesion(): Promise<Sesion | null> {
   try {
     const usuario = await pedir<UsuarioDTO>('GET', '/usuario/sesion');
-    const esAdministrador = await pedir('GET', `/usuario/${usuario.uuid}/grupos`).then(() => true, () => false);
-    return { usuario, esAdministrador };
+    const grupos = await pedir<{ esAdministrador: boolean }>('GET', '/usuario/sesion/grupos');
+    return { usuario, esAdministrador: grupos.esAdministrador };
   } catch {
     return null;
   }

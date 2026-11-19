@@ -1,5 +1,5 @@
 // Ingreso (T6.1, prototipos "Ingreso" e "Ingreso rechazado"): con la cuenta de Google de la empresa o con una cuenta
-// de Shiro (usuario o correo y contraseña). El backend setea las cookies de sesion; el front solo avisa que ingreso.
+// de Shiro (nombre de usuario y contraseña). El backend setea las cookies de sesion; el front solo avisa que ingreso.
 // Google Identity Services se carga solo si hay client id (VITE_GOOGLE_CLIENT_ID); sin el, el boton queda
 // deshabilitado y lo explica.
 import { useEffect, useEffectEvent, useState, type FormEvent } from 'react';
@@ -76,7 +76,7 @@ export function Ingreso({ alIngresar, clientIdDeGoogle = import.meta.env.VITE_GO
         </p>
         <div className="sh-separador">o con una cuenta de Shiro</div>
         <form style={{ display: 'grid', gap: 16 }} onSubmit={enviar}>
-          <label className="ui-field"><span className="ui-label">Usuario o correo</span>
+          <label className="ui-field"><span className="ui-label">Usuario</span>
             <input className="ui-input" autoComplete="username" value={usuario} onChange={(e) => setUsuario(e.target.value)} /></label>
           <label className="ui-field"><span className="ui-label">Contraseña</span>
             <input className="ui-input" type="password" autoComplete="current-password" value={contrasena} onChange={(e) => setContrasena(e.target.value)} /></label>
