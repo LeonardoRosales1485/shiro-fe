@@ -91,7 +91,7 @@ export function Espacio({ usuario, esAdministrador, alSalir }: Props) {
         )}
         {proyecto && clave && datos && (
           <DetalleDeTarea key={clave} proyecto={proyecto} clave={clave} tiposDeTablero={datos.tiposDeTablero} tiposDeTarea={datos.tiposDeTarea}
-            usuario={usuario} esAdministrador={esAdministrador} />
+            usuario={usuario} />
         )}
         {proyecto && tablero && tipoDeTablero && (
           <Tablero proyecto={proyecto} tablero={tablero} tipoDeTablero={tipoDeTablero} version={version} alNuevaTarea={() => setModal('tarea')} />

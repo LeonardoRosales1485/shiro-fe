@@ -3,6 +3,7 @@
 import { useId, useState } from 'react';
 import type { ComentarioDTO, HistorialDTO } from '../../api/tipos';
 import { ACCIONES_CON_CAMBIO, autor, fecha, fraseDeHistorial, iniciales } from '../../componentes/catalogos';
+import { Markdown } from '../../componentes/Markdown';
 import { AlertaDeError } from '../../componentes/Modal';
 
 type Props = {
@@ -49,7 +50,7 @@ export function Actividad({ comentarios, historial, errorDelHistorial, comentand
                   {c.canal === 'MCP' && <span className="ui-chip is-violet">Agente</span>}
                   <span className="ui-muted">{` · ${fecha(c.fecha, true)}`}</span>
                 </p>
-                <p className="sh-texto">{c.cuerpo}</p>
+                <Markdown texto={c.cuerpo} />
               </div>
             </article>
           ))}

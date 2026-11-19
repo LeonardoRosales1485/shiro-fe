@@ -10,6 +10,7 @@ import {
 import { ClonarTareaModal } from '../componentes/ClonarTareaModal';
 import { tituloDeTablero, TIPOS } from '../componentes/catalogos';
 import { Icono } from '../componentes/Icono';
+import { Markdown } from '../componentes/Markdown';
 import { rutaDeTablero } from '../componentes/MenuLateral';
 import { AlertaDeError, Modal } from '../componentes/Modal';
 import { RelacionarTareaModal } from '../componentes/RelacionarTareaModal';
@@ -25,7 +26,6 @@ type Props = {
   tiposDeTablero: TipoTableroDTO[];
   tiposDeTarea: TipoTareaDTO[];
   usuario: UsuarioDTO;
-  esAdministrador: boolean;
 };
 
 type Cargada = { tarea: TareaDetalleDTO; relaciones: RelacionDeTareaDTO[]; comentarios: ComentarioDTO[] };
@@ -34,8 +34,14 @@ type Carga = { estado: 'cargando' } | { estado: 'no-existe' } | { estado: 'error
 
 type Modal = 'clonar' | 'relacionar' | 'archivar' | null;
 
-// Tipos cuyas hijas se agregan desde el detalle como Subtarea (nivel 2)
-const CON_SUBTAREAS = ['HISTORIA', 'TAREA', 'BUG'];
+// Tipo de las hijas que se agregan desde el detalle: Subtarea en una historia, tarea o bug; Historia en una épica
+// (decision 45 del 19/11)
+const TIPO_DE_HIJA: Record<string, { tipo: string; seccion: string; nueva: string }> = {
+  HISTORIA: { tipo: 'SUBTAREA', seccion: 'Subtareas', nueva: 'subtarea' },
+  TAREA: { tipo: 'SUBTAREA', seccion: 'Subtareas', nueva: 'subtarea' },
+  BUG: { tipo: 'SUBTAREA', seccion: 'Subtareas', nueva: 'subtarea' },
+  EPICA: { tipo: 'HISTORIA', seccion: 'Historias de la épica', nueva: 'historia' },
+};
 
 // Busca la tarea por clave y trae su detalle, sus relaciones y sus comentarios. null si no existe o no se ve
 async function leer(clave: string): Promise<Cargada | null> {
@@ -80,7 +86,7 @@ function cuerpoDeEdicion(tarea: TareaDetalleDTO, cambios: Partial<Cambios>) {
   };
 }
 
-export function DetalleDeTarea({ proyecto, clave, tiposDeTablero, tiposDeTarea, usuario, esAdministrador }: Props) {
+export function DetalleDeTarea({ proyecto, clave, tiposDeTablero, tiposDeTarea, usuario }: Props) {
   const [carga, setCarga] = useState<Carga>({ estado: 'cargando' });
   const [vuelta, setVuelta] = useState(0);
   const [editando, setEditando] = useState(false);
@@ -185,10 +191,12 @@ export function DetalleDeTarea({ proyecto, clave, tiposDeTablero, tiposDeTarea, 
     return null;
   });
 
-  const agregarSubtarea = (titulo: string) => ejecutar(async () => {
+  const deHijas = TIPO_DE_HIJA[tarea.tipoCodigo];
+
+  const agregarHija = (titulo: string) => ejecutar(async () => {
     const creada = await pedir<TareaDetalleDTO>('POST', '/tarea/guardar',
-      { tableroUuid: tarea.tableroUuid, tipoCodigo: 'SUBTAREA', titulo, padreUuid: tarea.uuid });
-    const hija = { uuid: creada.uuid, clave: creada.clave, titulo, tipoCodigo: 'SUBTAREA',
+      { tableroUuid: tarea.tableroUuid, tipoCodigo: deHijas.tipo, titulo, padreUuid: tarea.uuid });
+    const hija = { uuid: creada.uuid, clave: creada.clave, titulo, tipoCodigo: deHijas.tipo,
       estadoNombre: creada.estadoNombre ?? estados.find((e) => e.inicial)?.nombre ?? null };
     actualizar({ tarea: { ...tarea, hijas: [...(tarea.hijas ?? []), hija] } });
     return `Se creó ${creada.clave}.`;
@@ -232,7 +240,7 @@ export function DetalleDeTarea({ proyecto, clave, tiposDeTablero, tiposDeTarea, 
       <div className="sh-detalle">
         <div className="sh-detalle-principal">
           {editando ? (
-            <EdicionDeTarea tarea={tarea} tiposDeTarea={tiposDeTarea} esAdministrador={esAdministrador} guardando={ocupado} error={error}
+            <EdicionDeTarea tarea={tarea} tiposDeTarea={tiposDeTarea} guardando={ocupado} error={error}
               conflicto={conflicto} alGuardar={(cambios) => guardar(cambios, null)}
               alCancelar={() => {
                 setEditando(false);
@@ -248,13 +256,12 @@ export function DetalleDeTarea({ proyecto, clave, tiposDeTablero, tiposDeTarea, 
           ) : (
             <section className="ui-card sh-tarjeta">
               <h2 className="ui-card-title">Descripción</h2>
-              {tarea.descripcion ? <p className="sh-texto" style={{ margin: 0 }}>{tarea.descripcion}</p> : <p className="ui-muted" style={{ margin: 0 }}>Sin descripción.</p>}
+              {tarea.descripcion ? <Markdown texto={tarea.descripcion} /> : <p className="ui-muted" style={{ margin: 0 }}>Sin descripción.</p>}
             </section>
           )}
-          {tarea.tipoCodigo !== 'SUBTAREA' && (
+          {deHijas && (
             <Subtareas prefijo={proyecto.prefijo} hijas={tarea.hijas ?? []} terminados={terminados}
-              titulo={tarea.tipoCodigo === 'EPICA' ? 'Tareas de la épica' : 'Subtareas'} permiteAgregar={CON_SUBTAREAS.includes(tarea.tipoCodigo)}
-              agregando={ocupado} alAgregar={agregarSubtarea} />
+              titulo={deHijas.seccion} nueva={deHijas.nueva} agregando={ocupado} alAgregar={agregarHija} />
           )}
           <Relaciones prefijo={proyecto.prefijo} relaciones={lista.relaciones} ocupado={ocupado}
             alRelacionar={() => setModal('relacionar')} alQuitar={quitarRelacion} />

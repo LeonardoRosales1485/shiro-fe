@@ -42,3 +42,7 @@
 .sh-dl dd>.ui-row{flex-wrap:nowrap}
 .sh-agregar{display:flex;gap:var(--space-2)}
 .sh-agregar .ui-input{flex:1;min-width:0}
+.sh-vista-previa{min-height:132px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-md)}
+.sh-markdown>:first-child{margin-top:0}
+.sh-markdown>:last-child{margin-bottom:0}
+.sh-markdown{overflow-wrap:anywhere}

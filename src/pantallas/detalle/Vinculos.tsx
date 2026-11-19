@@ -1,5 +1,5 @@
-// Subtareas y relaciones del detalle de tarea (T6.2, prototipo "Detalle"). Las subtareas muestran cuántas están
-// hechas y se agregan con solo el título; las relaciones muestran el vínculo visto desde esta tarea y el estado de la
+// Hijas y relaciones del detalle de tarea (T6.2, prototipo "Detalle"). Las hijas (subtareas, o historias de una
+// épica) muestran cuántas están hechas y se agregan con solo el título; las relaciones muestran el vínculo visto desde esta tarea y el estado de la
 // otra, y se quitan (salvo las de clon, que crea y mantiene clonar).
 import { useId, useState } from 'react';
 import type { RelacionDeTareaDTO, TareaHijaDTO } from '../../api/tipos';
@@ -12,12 +12,12 @@ type PropsSubtareas = {
   hijas: TareaHijaDTO[];
   terminados: string[];
   titulo: string;
-  permiteAgregar: boolean;
+  nueva: string;
   agregando: boolean;
   alAgregar: (titulo: string) => Promise<boolean>;
 };
 
-export function Subtareas({ prefijo, hijas, terminados, titulo, permiteAgregar, agregando, alAgregar }: PropsSubtareas) {
+export function Subtareas({ prefijo, hijas, terminados, titulo, nueva: tipoNuevo, agregando, alAgregar }: PropsSubtareas) {
   const [nueva, setNueva] = useState('');
   const id = useId();
   const hechas = hijas.filter((h) => h.estadoNombre && terminados.includes(h.estadoNombre)).length;
@@ -39,16 +39,14 @@ export function Subtareas({ prefijo, hijas, terminados, titulo, permiteAgregar, 
           </li>
         ))}
       </ul>
-      {permiteAgregar && (
-        <form className="sh-agregar" onSubmit={(e) => {
-          e.preventDefault();
-          agregar();
-        }}>
-          <label className="sh-sr" htmlFor={`${id}-n`}>Título de la nueva subtarea</label>
-          <input id={`${id}-n`} className="ui-input" placeholder="Título de la nueva subtarea" value={nueva} onChange={(e) => setNueva(e.target.value)} />
-          <button className="ui-btn" type="submit" disabled={!nueva.trim() || agregando}>Agregar</button>
-        </form>
-      )}
+      <form className="sh-agregar" onSubmit={(e) => {
+        e.preventDefault();
+        agregar();
+      }}>
+        <label className="sh-sr" htmlFor={`${id}-n`}>{`Título de la nueva ${tipoNuevo}`}</label>
+        <input id={`${id}-n`} className="ui-input" placeholder={`Título de la nueva ${tipoNuevo}`} value={nueva} onChange={(e) => setNueva(e.target.value)} />
+        <button className="ui-btn" type="submit" disabled={!nueva.trim() || agregando}>Agregar</button>
+      </form>
     </section>
   );
 }
