@@ -16,3 +16,29 @@
 .sh-columnas-scroll{overflow-x:auto}
 .sh-columnas{display:grid;gap:var(--space-3);align-items:start}
 .sh-task-skel{height:72px;border-radius:var(--radius-md)}
+
+/* Detalle de tarea (T6.2): contenido a la izquierda y panel de detalles a la derecha; en pantallas angostas, uno debajo del otro */
+.sh-task:hover{border-color:var(--border-strong)}
+.sh-task:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.sh-detalle{display:flex;flex-wrap:wrap;gap:var(--space-4);align-items:flex-start}
+.sh-detalle-principal{flex:999 1 480px;min-width:0;display:grid;gap:var(--space-4)}
+.sh-tarjeta,.sh-detalles,.sh-edicion,.sh-actividad{padding:var(--space-4);display:grid;gap:var(--space-3);align-content:start}
+.sh-detalles{flex:1 1 280px}
+.sh-dl{display:grid;grid-template-columns:auto 1fr;gap:var(--space-2) var(--space-3);margin:0}
+.sh-dl dt{color:var(--muted);font:500 13px/20px var(--font-sans)}
+.sh-dl dd{margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);min-width:0}
+.sh-chips{display:flex;flex-wrap:wrap;gap:6px}
+.sh-texto{white-space:pre-wrap;overflow-wrap:anywhere;margin:4px 0 0}
+.sh-grilla-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--space-3)}
+.sh-vinculos{list-style:none;margin:0;padding:0;display:grid;gap:var(--space-2)}
+.sh-vinculos a{text-decoration:none;font-weight:600}
+.sh-vinculos li{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-md)}
+.sh-lista-actividad{display:grid;gap:var(--space-3)}
+.sh-comentario{display:flex;gap:var(--space-3);align-items:flex-start}
+.sh-comentario-autor{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0}
+.sh-fieldset{border:0;margin:0;padding:0;display:grid;gap:var(--space-2)}
+.sh-checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--space-2)}
+.sh-opcion-tarea span{overflow-wrap:anywhere}
+.sh-dl dd>.ui-row{flex-wrap:nowrap}
+.sh-agregar{display:flex;gap:var(--space-2)}
+.sh-agregar .ui-input{flex:1;min-width:0}

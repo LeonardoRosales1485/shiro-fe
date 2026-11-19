@@ -1,24 +1,28 @@
 // Espacio de trabajo con sesion (T6.1): carga los proyectos visibles y los catalogos, resuelve la ruta
-// /proyecto/{prefijo}/{tablero} (sin ruta va al tablero principal del primer proyecto) y muestra el menu, el tablero
-// y los modales de crear tarea y proyecto.
+// /proyecto/{prefijo}/{tablero} (sin ruta va al tablero principal del primer proyecto) o /proyecto/{prefijo}/tarea/{clave}
+// (detalle de tarea, T6.2) y muestra el menu, el tablero o el detalle y los modales de crear tarea y proyecto.
 import { useEffect, useState } from 'react';
 import { mensajeDeError, pedir } from '../api/cliente';
-import { pedidoDePaginado, type Pagina, type ProyectoDTO, type TipoTableroDTO, type TipoTareaDTO } from '../api/tipos';
+import { pedidoDePaginado, type Pagina, type ProyectoDTO, type TipoTableroDTO, type TipoTareaDTO, type UsuarioDTO } from '../api/tipos';
 import { CrearProyectoModal } from '../componentes/CrearProyectoModal';
 import { CrearTareaModal } from '../componentes/CrearTareaModal';
 import { Icono } from '../componentes/Icono';
 import { MenuLateral, rutaDeTablero } from '../componentes/MenuLateral';
 import { navegar, useRuta } from '../navegacion/ruta';
+import { DetalleDeTarea } from './DetalleDeTarea';
 import { Tablero } from './Tablero';
 
-type Props = { esAdministrador: boolean; alSalir: () => void };
+type Props = { usuario: UsuarioDTO; esAdministrador: boolean; alSalir: () => void };
 
 type Datos = { proyectos: ProyectoDTO[]; tiposDeTablero: TipoTableroDTO[]; tiposDeTarea: TipoTareaDTO[] };
 
-// Prefijo y codigo de tablero de la ruta, o null si la ruta no es de un tablero
-function leerRuta(ruta: string): { prefijo: string; codigo: string } | null {
+// Prefijo y codigo de tablero (/proyecto/SHI/PRINCIPAL) o clave de tarea (/proyecto/SHI/tarea/SHI-12) de la ruta,
+// o null si la ruta no es de un proyecto
+function leerRuta(ruta: string): { prefijo: string; codigo: string | null; clave: string | null } | null {
+  const deTarea = /^\/proyecto\/([A-Z]{2,6})\/tarea\/([A-Za-z0-9-]+)$/.exec(ruta);
+  if (deTarea) return { prefijo: deTarea[1], codigo: null, clave: decodeURIComponent(deTarea[2]) };
   const partes = /^\/proyecto\/([A-Z]{2,6})\/([A-Z]+)$/.exec(ruta);
-  return partes ? { prefijo: partes[1], codigo: partes[2] } : null;
+  return partes ? { prefijo: partes[1], codigo: partes[2], clave: null } : null;
 }
 
 // Proyectos visibles y catalogos de tableros y tipos de tarea
@@ -31,7 +35,7 @@ async function leerDatos(): Promise<Datos> {
   return { proyectos: proyectos.contenido, tiposDeTablero, tiposDeTarea };
 }
 
-export function Espacio({ esAdministrador, alSalir }: Props) {
+export function Espacio({ usuario, esAdministrador, alSalir }: Props) {
   const ruta = useRuta();
   const [datos, setDatos] = useState<Datos | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -53,11 +57,13 @@ export function Espacio({ esAdministrador, alSalir }: Props) {
   const tablero = proyecto?.tableros.find((t) => t.tipoTableroCodigo === elegida?.codigo) ?? null;
   const tipoDeTablero = datos?.tiposDeTablero.find((t) => t.uuid === tablero?.tipoTableroUuid) ?? null;
 
+  const clave = proyecto && elegida?.clave ? elegida.clave : null;
+
   useEffect(() => {
-    if (datos && !tablero && datos.proyectos.length > 0) {
+    if (datos && !tablero && !clave && datos.proyectos.length > 0) {
       navegar(rutaDeTablero(datos.proyectos[0].prefijo, 'PRINCIPAL'), true);
     }
-  }, [datos, tablero]);
+  }, [datos, tablero, clave]);
 
   const alCrearProyecto = (nuevo: ProyectoDTO) => {
     setModal(null);
@@ -82,6 +88,10 @@ export function Espacio({ esAdministrador, alSalir }: Props) {
               </p>
             </div>
           </section>
+        )}
+        {proyecto && clave && datos && (
+          <DetalleDeTarea key={clave} proyecto={proyecto} clave={clave} tiposDeTablero={datos.tiposDeTablero} tiposDeTarea={datos.tiposDeTarea}
+            usuario={usuario} esAdministrador={esAdministrador} />
         )}
         {proyecto && tablero && tipoDeTablero && (
           <Tablero proyecto={proyecto} tablero={tablero} tipoDeTablero={tipoDeTablero} version={version} alNuevaTarea={() => setModal('tarea')} />

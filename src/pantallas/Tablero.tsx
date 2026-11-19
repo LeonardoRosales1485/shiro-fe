@@ -1,11 +1,13 @@
 // Tablero (T6.1, prototipos "Main", "Proyecto recién creado" y sub-tableros): una columna por estado del tipo de
 // tablero, con sus tareas (tipo, clave, prioridad, puntos y responsable). Sin tareas muestra como empezar. Se recarga
-// cuando cambia version (por ejemplo, despues de crear una tarea).
+// cuando cambia version (por ejemplo, despues de crear una tarea). Cada tarjeta lleva al detalle de su tarea (T6.2).
 import { useEffect, useState } from 'react';
 import { mensajeDeError, pedir } from '../api/cliente';
 import { pedidoDePaginado, type Pagina, type ProyectoDTO, type TableroDTO, type TareaDTO, type TipoTableroDTO } from '../api/tipos';
 import { iniciales, PRIORIDADES, TIPOS, tituloDeTablero } from '../componentes/catalogos';
 import { Icono } from '../componentes/Icono';
+import { href, navegar } from '../navegacion/ruta';
+import { rutaDeTarea } from './detalle/PanelDeDetalles';
 
 type Props = { proyecto: ProyectoDTO; tablero: TableroDTO; tipoDeTablero: TipoTableroDTO; version: number; alNuevaTarea: () => void };
 
@@ -69,7 +71,7 @@ export function Tablero({ proyecto, tablero, tipoDeTablero, version, alNuevaTare
               <section key={estado.uuid} className="sh-col" aria-label={estado.nombre}>
                 <h2 className="sh-col-head" style={{ margin: 0 }}>{estado.nombre}<span className="sh-count">{enEstado.length}</span></h2>
                 {carga.estado === 'cargando' && <div className="ui-skel sh-task-skel" />}
-                {enEstado.map((t) => <Tarjeta key={t.uuid} tarea={t} />)}
+                {enEstado.map((t) => <Tarjeta key={t.uuid} tarea={t} prefijo={proyecto.prefijo} />)}
               </section>
             );
           })}
@@ -79,12 +81,15 @@ export function Tablero({ proyecto, tablero, tipoDeTablero, version, alNuevaTare
   );
 }
 
-// Tarjeta de una tarea en su columna
-function Tarjeta({ tarea }: { tarea: TareaDTO }) {
+// Tarjeta de una tarea en su columna; lleva al detalle de la tarea
+function Tarjeta({ tarea, prefijo }: { tarea: TareaDTO; prefijo: string }) {
   const tipo = TIPOS[tarea.tipoCodigo] ?? TIPOS.TAREA;
   const prioridad = PRIORIDADES[tarea.prioridad] ?? PRIORIDADES.MEDIA;
   return (
-    <article className="sh-task">
+    <a className="sh-task" href={href(rutaDeTarea(prefijo, tarea.clave))} onClick={(e) => {
+      e.preventDefault();
+      navegar(rutaDeTarea(prefijo, tarea.clave));
+    }}>
       <p className="sh-task-title">{tarea.titulo}</p>
       <span className="sh-task-meta">
         <span className={`sh-type ${tipo.tono}`}><Icono nombre={tipo.icono} clase="" etiqueta={tarea.tipoCodigo} /></span>
@@ -96,6 +101,6 @@ function Tarjeta({ tarea }: { tarea: TareaDTO }) {
           <span className="ui-avatar sm" title={tarea.responsableNombre}>{iniciales(tarea.responsableNombre)}<span className="sh-sr">{` ${tarea.responsableNombre}`}</span></span>
         )}
       </span>
-    </article>
+    </a>
   );
 }

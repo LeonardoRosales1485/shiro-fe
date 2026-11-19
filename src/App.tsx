@@ -47,5 +47,5 @@ export function App() {
   if (sesion === null) {
     return <Ingreso alIngresar={cargarSesion} />;
   }
-  return <Espacio key={sesion.usuario.uuid} esAdministrador={sesion.esAdministrador} alSalir={salir} />;
+  return <Espacio key={sesion.usuario.uuid} usuario={sesion.usuario} esAdministrador={sesion.esAdministrador} alSalir={salir} />;
 }
