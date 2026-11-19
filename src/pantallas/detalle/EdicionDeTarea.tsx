@@ -1,11 +1,13 @@
 // Edicion de una tarea (T6.2, prototipo "Detalle · edición"): tipo (entre los de su mismo nivel), título,
-// descripción, prioridad, estimación, etiquetas, vencimiento y, para administradores, responsable. La clave, el
-// tablero y las fechas no se editan. Si el guardado falla (por ejemplo, 409 porque otro la cambió) lo escrito se
+// descripción (con vista previa del Markdown), prioridad, estimación, etiquetas, vencimiento y responsable, que
+// cualquier usuario elige entre los que acceden al proyecto (decision 42 del 19/11). La clave, el tablero y las
+// fechas no se editan. Si el guardado falla (por ejemplo, 409 porque otro la cambió) lo escrito se
 // conserva y se ofrece recargar.
 import { useEffect, useId, useState } from 'react';
 import { pedir } from '../../api/cliente';
-import { pedidoDePaginado, type Pagina, type Prioridad, type TareaDetalleDTO, type TipoTareaDTO, type UsuarioDTO } from '../../api/tipos';
+import type { Prioridad, TareaDetalleDTO, TipoTareaDTO, UsuarioDelProyectoDTO } from '../../api/tipos';
 import { ORDEN_DE_PRIORIDADES, PRIORIDADES } from '../../componentes/catalogos';
+import { Markdown } from '../../componentes/Markdown';
 import { AlertaDeError } from '../../componentes/Modal';
 
 // Lo que se edita en el formulario
@@ -23,7 +25,6 @@ export type Cambios = {
 type Props = {
   tarea: TareaDetalleDTO;
   tiposDeTarea: TipoTareaDTO[];
-  esAdministrador: boolean;
   guardando: boolean;
   error: string | null;
   conflicto: boolean;
@@ -46,25 +47,31 @@ function inicial(tarea: TareaDetalleDTO): Cambios {
   };
 }
 
-export function EdicionDeTarea({ tarea, tiposDeTarea, esAdministrador, guardando, error, conflicto, alGuardar, alCancelar, alRecargar }: Props) {
+export function EdicionDeTarea({ tarea, tiposDeTarea, guardando, error, conflicto, alGuardar, alCancelar, alRecargar }: Props) {
   const [cambios, setCambios] = useState<Cambios>(() => inicial(tarea));
-  const [usuarios, setUsuarios] = useState<UsuarioDTO[]>([]);
+  const [usuarios, setUsuarios] = useState<UsuarioDelProyectoDTO[]>([]);
+  const [vistaPrevia, setVistaPrevia] = useState(false);
   const id = useId();
   const nivel = tiposDeTarea.find((t) => t.codigo === tarea.tipoCodigo)?.nivel;
   const tiposDelNivel = tiposDeTarea.filter((t) => t.nivel === nivel);
   const poner = (campo: keyof Cambios) => (valor: string) => setCambios((actuales) => ({ ...actuales, [campo]: valor }));
 
-  // Solo los administradores listan usuarios (POST /usuario/paginar); el resto se asigna con «Asignármela»
+  // Usuarios que acceden al proyecto, para elegir el responsable. Si no se pueden leer queda el responsable actual
   useEffect(() => {
-    if (!esAdministrador) return;
+    if (!tarea.proyectoUuid) return;
     let vigente = true;
-    pedir<Pagina<UsuarioDTO>>('POST', '/usuario/paginar', pedidoDePaginado([], 'nombreDeUsuario', 200))
-      .then((pagina) => vigente && setUsuarios(pagina.contenido))
+    pedir<UsuarioDelProyectoDTO[]>('GET', `/proyecto/${tarea.proyectoUuid}/usuarios`)
+      .then((leidos) => vigente && setUsuarios(leidos))
       .catch(() => undefined);
     return () => {
       vigente = false;
     };
-  }, [esAdministrador]);
+  }, [tarea.proyectoUuid]);
+
+  // El responsable actual queda entre las opciones aunque ya no acceda al proyecto (por ejemplo, uno importado)
+  const opciones = tarea.responsableUuid && !usuarios.some((u) => u.uuid === tarea.responsableUuid)
+    ? [{ uuid: tarea.responsableUuid, nombreDeUsuario: tarea.responsableNombre ?? '', nombre: tarea.responsableNombre }, ...usuarios]
+    : usuarios;
 
   const campo = (nombre: keyof Cambios, etiqueta: string, tipo = 'text') => (
     <div className="ui-field">
@@ -89,8 +96,17 @@ export function EdicionDeTarea({ tarea, tiposDeTarea, esAdministrador, guardando
       )}
       {campo('titulo', 'Título')}
       <div className="ui-field">
-        <label className="ui-label" htmlFor={`${id}-descripcion`}>Descripción</label>
-        <textarea id={`${id}-descripcion`} className="ui-textarea" rows={6} value={cambios.descripcion} onChange={(e) => poner('descripcion')(e.target.value)} />
+        <div className="ui-row">
+          <label className="ui-label" htmlFor={`${id}-descripcion`}>Descripción</label>
+          <span className="ui-spacer" />
+          <div className="ui-tabs" role="tablist" aria-label="Modo de la descripción">
+            <button type="button" role="tab" className="ui-tab" aria-selected={!vistaPrevia} onClick={() => setVistaPrevia(false)}>Escribir</button>
+            <button type="button" role="tab" className="ui-tab" aria-selected={vistaPrevia} onClick={() => setVistaPrevia(true)}>Vista previa</button>
+          </div>
+        </div>
+        {vistaPrevia
+          ? <div className="sh-vista-previa">{cambios.descripcion.trim() ? <Markdown texto={cambios.descripcion} /> : <p className="ui-muted">Nada para mostrar.</p>}</div>
+          : <textarea id={`${id}-descripcion`} className="ui-textarea" rows={6} value={cambios.descripcion} onChange={(e) => poner('descripcion')(e.target.value)} />}
         <span className="ui-help">Acepta Markdown.</span>
       </div>
       <div className="sh-grilla-2">
@@ -103,12 +119,12 @@ export function EdicionDeTarea({ tarea, tiposDeTarea, esAdministrador, guardando
         {campo('puntos', 'Estimación (puntos)', 'number')}
         {campo('etiquetas', 'Etiquetas (separadas por coma)')}
         {campo('vencimiento', 'Vence', 'date')}
-        {esAdministrador && usuarios.length > 0 && (
+        {opciones.length > 0 && (
           <div className="ui-field">
             <label className="ui-label" htmlFor={`${id}-responsable`}>Responsable</label>
             <select id={`${id}-responsable`} className="ui-select" value={cambios.responsableUuid} onChange={(e) => poner('responsableUuid')(e.target.value)}>
               <option value="">Sin asignar</option>
-              {usuarios.map((u) => <option key={u.uuid} value={u.uuid}>{u.nombreDeUsuario}</option>)}
+              {opciones.map((u) => <option key={u.uuid} value={u.uuid}>{u.nombre || u.nombreDeUsuario}</option>)}
             </select>
           </div>
         )}

@@ -34,6 +34,9 @@ export function pedidoDePaginado(filtros: Filtro[], campoDeOrden: string, tamano
   return { pagina: 1, tamano, filtros: filtros.length ? [filtros] : [], ordenes: [{ campo: campoDeOrden, direccion: 'asc' }] };
 }
 
+// Usuario con acceso a un proyecto (GET /proyecto/{uuid}/usuarios)
+export type UsuarioDelProyectoDTO = { uuid: string; nombreDeUsuario: string; nombre: string | null };
+
 export type TareaHijaDTO = { uuid: string; clave: string; titulo: string; tipoCodigo: string; estadoNombre: string | null };
 
 // Detalle completo de una tarea (GET /tarea/uuid/{uuid}); los campos sin "Uuid" de las relaciones son de solo lectura
