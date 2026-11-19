@@ -1,28 +1,35 @@
 // Menu lateral (prototipo "Main"): marca, selector de proyecto, tableros del proyecto, administracion (solo
-// administradores), tema y salir. Se contrae a riel. Las secciones de planificacion, busqueda y cuenta se suman en
-// las tareas siguientes de F6.
+// administradores), tema y salir. Se contrae a riel. Planificacion (backlog y sprints, versiones) llega en T6.3;
+// busqueda y cuenta se suman en las tareas siguientes de F6.
 import { useState, type MouseEvent } from 'react';
 import type { ProyectoDTO } from '../api/tipos';
 import { href, navegar } from '../navegacion/ruta';
 import { ICONOS_DE_TABLERO } from './catalogos';
-import { Icono, Isotipo } from './Icono';
+import { Icono, Isotipo, type NombreDeIcono } from './Icono';
 import { etiquetaDeTema, useTema } from './Tema';
 
 type Props = {
   proyectos: ProyectoDTO[];
   proyecto: ProyectoDTO | null;
   codigoDeTablero: string | null;
+  seccion?: string | null;
   esAdministrador: boolean;
   alCrearProyecto: () => void;
   alSalir: () => void;
 };
+
+// Secciones de planificacion del proyecto (T6.3)
+const PLANIFICACION: { seccion: string; nombre: string; icono: NombreDeIcono }[] = [
+  { seccion: 'backlog', nombre: 'Backlog y sprints', icono: 'lista' },
+  { seccion: 'versiones', nombre: 'Versiones', icono: 'caja' },
+];
 
 // Ruta del tablero de un proyecto
 export function rutaDeTablero(prefijo: string, codigo: string): string {
   return `/proyecto/${prefijo}/${codigo}`;
 }
 
-export function MenuLateral({ proyectos, proyecto, codigoDeTablero, esAdministrador, alCrearProyecto, alSalir }: Props) {
+export function MenuLateral({ proyectos, proyecto, codigoDeTablero, seccion = null, esAdministrador, alCrearProyecto, alSalir }: Props) {
   const [riel, setRiel] = useState(false);
   const [tema, alternarTema] = useTema();
   const ir = (ruta: string) => (evento: MouseEvent) => {
@@ -57,6 +64,17 @@ export function MenuLateral({ proyectos, proyecto, codigoDeTablero, esAdministra
                 title={t.tipoTableroNombre} onClick={ir(ruta)}>
                 <Icono nombre={ICONOS_DE_TABLERO[t.tipoTableroCodigo] ?? 'columnas'} clase={activo && t.tipoTableroCodigo === 'PRINCIPAL' ? 'ui-icon sh-paw' : 'ui-icon'} />
                 <span>{t.tipoTableroNombre}</span>
+              </a>
+            );
+          })}
+          <div className="ui-side-title">Planificación</div>
+          {PLANIFICACION.map((p) => {
+            const ruta = `/proyecto/${proyecto.prefijo}/${p.seccion}`;
+            const activo = seccion === p.seccion;
+            return (
+              <a key={p.seccion} className={`ui-side-item ${activo ? 'active' : ''}`} href={href(ruta)} aria-current={activo ? 'page' : undefined}
+                title={p.nombre} onClick={ir(ruta)}>
+                <Icono nombre={p.icono} /><span>{p.nombre}</span>
               </a>
             );
           })}

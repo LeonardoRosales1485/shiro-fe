@@ -10,15 +10,21 @@ import { Icono } from '../componentes/Icono';
 import { MenuLateral, rutaDeTablero } from '../componentes/MenuLateral';
 import { navegar, useRuta } from '../navegacion/ruta';
 import { DetalleDeTarea } from './DetalleDeTarea';
+import { Planificacion } from './Planificacion';
 import { Tablero } from './Tablero';
+import { Versiones } from './Versiones';
 
 type Props = { usuario: UsuarioDTO; esAdministrador: boolean; alSalir: () => void };
 
+type Seccion = 'backlog' | 'versiones';
+
 type Datos = { proyectos: ProyectoDTO[]; tiposDeTablero: TipoTableroDTO[]; tiposDeTarea: TipoTareaDTO[] };
 
-// Prefijo y codigo de tablero (/proyecto/SHI/PRINCIPAL) o clave de tarea (/proyecto/SHI/tarea/SHI-12) de la ruta,
-// o null si la ruta no es de un proyecto
-function leerRuta(ruta: string): { prefijo: string; codigo: string | null; clave: string | null } | null {
+// Prefijo y codigo de tablero (/proyecto/SHI/PRINCIPAL), clave de tarea (/proyecto/SHI/tarea/SHI-12) o seccion de
+// planificacion (/proyecto/SHI/backlog, /proyecto/SHI/versiones) de la ruta, o null si la ruta no es de un proyecto
+function leerRuta(ruta: string): { prefijo: string; codigo: string | null; clave: string | null; seccion?: Seccion } | null {
+  const deSeccion = /^\/proyecto\/([A-Z]{2,6})\/(backlog|versiones)$/.exec(ruta);
+  if (deSeccion) return { prefijo: deSeccion[1], codigo: null, clave: null, seccion: deSeccion[2] as Seccion };
   const deTarea = /^\/proyecto\/([A-Z]{2,6})\/tarea\/([A-Za-z0-9-]+)$/.exec(ruta);
   if (deTarea) return { prefijo: deTarea[1], codigo: null, clave: decodeURIComponent(deTarea[2]) };
   const partes = /^\/proyecto\/([A-Z]{2,6})\/([A-Z]+)$/.exec(ruta);
@@ -58,12 +64,13 @@ export function Espacio({ usuario, esAdministrador, alSalir }: Props) {
   const tipoDeTablero = datos?.tiposDeTablero.find((t) => t.uuid === tablero?.tipoTableroUuid) ?? null;
 
   const clave = proyecto && elegida?.clave ? elegida.clave : null;
+  const seccion = proyecto && elegida?.seccion ? elegida.seccion : null;
 
   useEffect(() => {
-    if (datos && !tablero && !clave && datos.proyectos.length > 0) {
+    if (datos && !tablero && !clave && !seccion && datos.proyectos.length > 0) {
       navegar(rutaDeTablero(datos.proyectos[0].prefijo, 'PRINCIPAL'), true);
     }
-  }, [datos, tablero, clave]);
+  }, [datos, tablero, clave, seccion]);
 
   const alCrearProyecto = (nuevo: ProyectoDTO) => {
     setModal(null);
@@ -73,7 +80,7 @@ export function Espacio({ usuario, esAdministrador, alSalir }: Props) {
 
   return (
     <div className="sh-espacio">
-      <MenuLateral proyectos={datos?.proyectos ?? []} proyecto={proyecto} codigoDeTablero={elegida?.codigo ?? null}
+      <MenuLateral proyectos={datos?.proyectos ?? []} proyecto={proyecto} codigoDeTablero={elegida?.codigo ?? null} seccion={seccion}
         esAdministrador={esAdministrador} alCrearProyecto={() => setModal('proyecto')} alSalir={alSalir} />
       <main className="ui-main sh-principal">
         {error && <div className="ui-alert is-danger" role="alert"><Icono nombre="alerta" /><span>{error}</span></div>}
@@ -89,6 +96,8 @@ export function Espacio({ usuario, esAdministrador, alSalir }: Props) {
             </div>
           </section>
         )}
+        {proyecto && seccion === 'backlog' && datos && <Planificacion key={proyecto.uuid} proyecto={proyecto} tiposDeTablero={datos.tiposDeTablero} />}
+        {proyecto && seccion === 'versiones' && datos && <Versiones key={proyecto.uuid} proyecto={proyecto} tiposDeTablero={datos.tiposDeTablero} />}
         {proyecto && clave && datos && (
           <DetalleDeTarea key={clave} proyecto={proyecto} clave={clave} tiposDeTablero={datos.tiposDeTablero} tiposDeTarea={datos.tiposDeTarea}
             usuario={usuario} />
