@@ -1,6 +1,7 @@
 // Menu lateral (prototipo "Main"): marca, selector de proyecto, tableros del proyecto, administracion (solo
-// administradores), tema y salir. Se contrae a riel. Planificacion (backlog y sprints, versiones) llega en T6.3;
-// General (busqueda y archivados) y Cuenta (tokens MCP), en T6.4.
+// administradores: usuarios y permisos, importar desde Jira y crear proyecto), tema y salir. Se contrae a riel.
+// Planificacion (backlog y sprints, versiones) llega en T6.3; General (busqueda y archivados) y Cuenta (tokens MCP),
+// en T6.4; la administracion, en T6.5.
 import { useState, type MouseEvent } from 'react';
 import type { ProyectoDTO } from '../api/tipos';
 import { href, navegar } from '../navegacion/ruta';
@@ -24,11 +25,17 @@ const PLANIFICACION: { seccion: string; nombre: string; icono: NombreDeIcono }[]
   { seccion: 'versiones', nombre: 'Versiones', icono: 'caja' },
 ];
 
-// Paginas generales del menu, que no dependen del proyecto (T6.4)
-const SECCIONES_GENERALES: { titulo: string; paginas: { seccion: string; nombre: string; icono: NombreDeIcono }[] }[] = [
-  { titulo: 'General', paginas: [{ seccion: 'busqueda', nombre: 'Búsqueda', icono: 'lupa' }, { seccion: 'archivados', nombre: 'Archivados', icono: 'archivo' }] },
-  { titulo: 'Cuenta', paginas: [{ seccion: 'tokens', nombre: 'Tokens MCP', icono: 'llave' }] },
-];
+type Grupo = { titulo: string; paginas: { seccion: string; nombre: string; icono: NombreDeIcono }[] };
+
+// Paginas generales del menu, que no dependen del proyecto (T6.4); la administracion (T6.5) solo para administradores
+const GENERAL: Grupo = { titulo: 'General', paginas: [{ seccion: 'busqueda', nombre: 'Búsqueda', icono: 'lupa' }, { seccion: 'archivados', nombre: 'Archivados', icono: 'archivo' }] };
+
+const ADMINISTRACION: Grupo = {
+  titulo: 'Administración',
+  paginas: [{ seccion: 'administracion', nombre: 'Usuarios y permisos', icono: 'escudo' }, { seccion: 'importar', nombre: 'Importar desde Jira', icono: 'descargar' }],
+};
+
+const CUENTA: Grupo = { titulo: 'Cuenta', paginas: [{ seccion: 'tokens', nombre: 'Tokens MCP', icono: 'llave' }] };
 
 // Ruta del tablero de un proyecto
 export function rutaDeTablero(prefijo: string, codigo: string): string {
@@ -77,20 +84,17 @@ export function MenuLateral({ proyectos, proyecto, codigoDeTablero, seccion = nu
           {PLANIFICACION.map((p) => <Enlace key={p.seccion} pagina={p} ruta={`/proyecto/${proyecto.prefijo}/${p.seccion}`} activo={seccion === p.seccion} />)}
         </>
       )}
-      {SECCIONES_GENERALES.map((grupo) => (
+      {(esAdministrador ? [GENERAL, ADMINISTRACION, CUENTA] : [GENERAL, CUENTA]).map((grupo) => (
         <div key={grupo.titulo} className="sh-grupo-menu">
           <div className="ui-side-title">{grupo.titulo}</div>
           {grupo.paginas.map((p) => <Enlace key={p.seccion} pagina={p} ruta={`/${p.seccion}`} activo={seccion === p.seccion} />)}
+          {grupo === ADMINISTRACION && (
+            <button className="ui-side-item sh-side-btn" type="button" title="Crear proyecto" onClick={alCrearProyecto}>
+              <Icono nombre="mas" /><span>Crear proyecto</span>
+            </button>
+          )}
         </div>
       ))}
-      {esAdministrador && (
-        <>
-          <div className="ui-side-title">Administración</div>
-          <button className="ui-side-item sh-side-btn" type="button" title="Crear proyecto" onClick={alCrearProyecto}>
-            <Icono nombre="mas" /><span>Crear proyecto</span>
-          </button>
-        </>
-      )}
       <span className="ui-spacer" />
       <button className="ui-side-item sh-side-btn" type="button" title={etiquetaDeTema(tema)} onClick={alternarTema}>
         <Icono nombre={tema === 'dark' ? 'sol' : 'luna'} /><span>{etiquetaDeTema(tema)}</span>

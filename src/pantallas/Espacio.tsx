@@ -1,7 +1,7 @@
 // Espacio de trabajo con sesion (T6.1): carga los proyectos visibles y los catalogos, resuelve la ruta
 // /proyecto/{prefijo}/{tablero} (sin ruta va al tablero principal del primer proyecto) o /proyecto/{prefijo}/tarea/{clave}
 // (detalle de tarea, T6.2) y muestra el menu, el tablero o el detalle y los modales de crear tarea y proyecto.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { mensajeDeError, pedir } from '../api/cliente';
 import { pedidoDePaginado, type Pagina, type ProyectoDTO, type TipoTableroDTO, type TipoTareaDTO, type UsuarioDTO } from '../api/tipos';
 import { CrearProyectoModal } from '../componentes/CrearProyectoModal';
@@ -9,9 +9,11 @@ import { CrearTareaModal } from '../componentes/CrearTareaModal';
 import { Icono } from '../componentes/Icono';
 import { MenuLateral, rutaDeTablero } from '../componentes/MenuLateral';
 import { navegar, useRuta } from '../navegacion/ruta';
+import { Administracion } from './Administracion';
 import { Archivados } from './Archivados';
 import { Busqueda } from './Busqueda';
 import { DetalleDeTarea } from './DetalleDeTarea';
+import { Importacion } from './Importacion';
 import { Planificacion } from './Planificacion';
 import { Tablero } from './Tablero';
 import { Tokens } from './Tokens';
@@ -21,10 +23,12 @@ type Props = { usuario: UsuarioDTO; esAdministrador: boolean; alSalir: () => voi
 
 type Seccion = 'backlog' | 'versiones';
 
-// Paginas que no son de un proyecto (T6.4)
-type General = 'busqueda' | 'archivados' | 'tokens';
+// Paginas que no son de un proyecto (T6.4); administracion e importar, solo para administradores (T6.5)
+type General = 'busqueda' | 'archivados' | 'tokens' | 'administracion' | 'importar';
 
 const GENERALES: General[] = ['busqueda', 'archivados', 'tokens'];
+
+const DE_ADMINISTRACION: General[] = ['administracion', 'importar'];
 
 type Datos = { proyectos: ProyectoDTO[]; tiposDeTablero: TipoTableroDTO[]; tiposDeTarea: TipoTareaDTO[] };
 
@@ -56,18 +60,28 @@ export function Espacio({ usuario, esAdministrador, alSalir }: Props) {
   const [modal, setModal] = useState<'tarea' | 'proyecto' | null>(null);
   const [version, setVersion] = useState(0);
 
+  const [lectura, setLectura] = useState(0);
+  // Ruta a la que ir cuando termine la proxima lectura (por ejemplo, el tablero de un proyecto recien importado)
+  const destino = useRef<string | null>(null);
+
+  // Lee los proyectos y catalogos al entrar y cada vez que la administracion o la importacion los cambian
   useEffect(() => {
     let vigente = true;
     leerDatos()
-      .then((leidos) => vigente && setDatos(leidos))
+      .then((leidos) => {
+        if (!vigente) return;
+        setDatos(leidos);
+        if (destino.current) navegar(destino.current);
+        destino.current = null;
+      })
       .catch((e) => vigente && setError(mensajeDeError(e)));
     return () => {
       vigente = false;
     };
-  }, []);
+  }, [lectura]);
 
   const elegida = leerRuta(ruta);
-  const general = GENERALES.find((g) => ruta === `/${g}`) ?? null;
+  const general = [...GENERALES, ...(esAdministrador ? DE_ADMINISTRACION : [])].find((g) => ruta === `/${g}`) ?? null;
   const [ultimoPrefijo, setUltimoPrefijo] = useState<string | null>(null);
   if (elegida && elegida.prefijo !== ultimoPrefijo) setUltimoPrefijo(elegida.prefijo);
   const proyecto = datos?.proyectos.find((p) => p.prefijo === elegida?.prefijo) ?? null;
@@ -98,7 +112,7 @@ export function Espacio({ usuario, esAdministrador, alSalir }: Props) {
       <main className="ui-main sh-principal">
         {error && <div className="ui-alert is-danger" role="alert"><Icono nombre="alerta" /><span>{error}</span></div>}
         {!datos && !error && <div className="ui-row ui-muted" role="status"><span className="ui-spinner" aria-hidden="true" />Cargando tu espacio...</div>}
-        {datos && datos.proyectos.length === 0 && (
+        {datos && datos.proyectos.length === 0 && !general && (
           <section className="ui-card">
             <div className="ui-empty">
               <span className="ui-empty-icon"><Icono nombre="columnas" /></span>
@@ -114,6 +128,16 @@ export function Espacio({ usuario, esAdministrador, alSalir }: Props) {
         )}
         {general === 'archivados' && <Archivados esAdministrador={esAdministrador} />}
         {general === 'tokens' && <Tokens nombreDelUsuario={usuario.nombre || usuario.nombreDeUsuario} />}
+        {general === 'administracion' && datos && (
+          <Administracion usuario={usuario} proyectos={datos.proyectos} tiposDeTablero={datos.tiposDeTablero} alCrearProyecto={() => setModal('proyecto')}
+            alCambiarProyectos={() => setLectura((v) => v + 1)} />
+        )}
+        {general === 'importar' && datos && (
+          <Importacion tiposDeTablero={datos.tiposDeTablero} tiposDeTarea={datos.tiposDeTarea} alIrAlTablero={(prefijo) => {
+            destino.current = rutaDeTablero(prefijo, 'PRINCIPAL');
+            setLectura((v) => v + 1);
+          }} />
+        )}
         {proyecto && seccion === 'backlog' && datos && <Planificacion key={proyecto.uuid} proyecto={proyecto} tiposDeTablero={datos.tiposDeTablero} />}
         {proyecto && seccion === 'versiones' && datos && <Versiones key={proyecto.uuid} proyecto={proyecto} tiposDeTablero={datos.tiposDeTablero} />}
         {proyecto && clave && datos && (
