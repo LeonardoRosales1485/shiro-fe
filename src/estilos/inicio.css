@@ -1,6 +1,0 @@
-/* Pagina inicial provisoria. Solo usa tokens del design system. */
-.inicio { display: grid; place-items: center; min-height: 100vh; padding: var(--space-6); }
-.inicio-tarjeta { width: min(400px, 100%); }
-.inicio-tarjeta .ui-card-body { padding: var(--space-8); }
-.inicio-antetitulo { margin: 0 0 var(--space-1); font: 600 13px/16px var(--font-sans); }
-.inicio-titulo { margin: 0; font: 700 28px/36px var(--font-sans); }

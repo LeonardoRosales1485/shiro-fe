@@ -47,7 +47,7 @@ describe('CrearTareaModal', () => {
 
     await screen.findByText(/SHI-10/);
     expect(pedidos[0].cuerpo).toEqual({ tableroUuid: 't1', tipoCodigo: 'TAREA', titulo: 'Con datos', descripcion: 'Detalle',
-      prioridad: 'ALTA', puntos: 3, etiquetas: ['login', 'urgente'] });
+      prioridad: 'ALTA', puntos: 3, etiquetas: [{ texto: 'login' }, { texto: 'urgente' }] });
   });
 
   it('muestra el error del backend', async () => {

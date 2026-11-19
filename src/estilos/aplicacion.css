@@ -1,0 +1,18 @@
+/* Armado de las pantallas de Shiro (lo que el prototipo escribia en linea), solo con tokens del design system */
+.sh-espacio{display:flex;align-items:stretch;min-height:100vh}
+.sh-principal{flex:999 1 560px;min-width:0}
+.sh-cargando{min-height:100vh;display:grid;place-items:center}
+.sh-veil{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:var(--space-6);overflow-y:auto;background:var(--velo)}
+.sh-ingreso{min-height:100vh;display:grid;place-items:center;padding:var(--space-6);position:relative}
+.sh-ingreso-tema{position:absolute;top:var(--space-4);right:var(--space-4)}
+.sh-ingreso-tarjeta{width:100%;max-width:420px;padding:var(--space-8);display:grid;gap:var(--space-5)}
+.sh-ingreso-titulo{margin:0;font:700 28px/36px var(--font-sans)}
+.sh-marca{font:800 26px/30px var(--font-sans);color:var(--text)}
+.sh-separador{display:flex;align-items:center;gap:var(--space-3);color:var(--muted);font:600 12px/16px var(--font-sans)}
+.sh-separador::before,.sh-separador::after{content:"";flex:1;height:1px;background:var(--border)}
+.sh-opcion{display:inline-flex;align-items:center;gap:6px}
+.sh-opcion-deshabilitada{opacity:.6;cursor:not-allowed}
+.sh-mas-datos{display:grid;gap:var(--space-4);padding-top:var(--space-3);border-top:1px solid var(--border)}
+.sh-columnas-scroll{overflow-x:auto}
+.sh-columnas{display:grid;gap:var(--space-3);align-items:start}
+.sh-task-skel{height:72px;border-radius:var(--radius-md)}
