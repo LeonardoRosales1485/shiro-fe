@@ -28,8 +28,8 @@ describe('Versiones', () => {
     mostrar();
 
     const tabla = await screen.findByRole('table', { name: 'Versiones' });
-    expect(within(tabla).getByRole('row', { name: /1\.0\.0 Sin publicar —/ })).toBeInTheDocument();
-    expect(within(tabla).getByRole('row', { name: /0\.9\.0 Publicada 30\/10\/2026/ })).toBeInTheDocument();
+    expect(within(tabla).getByRole('row', { name: /1\.0\.0 Sin publicar — 3/ })).toBeInTheDocument();
+    expect(within(tabla).getByRole('row', { name: /0\.9\.0 Publicada 30\/10\/2026 27/ })).toBeInTheDocument();
     const detalle = await screen.findByRole('region', { name: '1.0.0' });
     expect(await within(detalle).findByText('Hechas 2 / 3')).toBeInTheDocument();
     expect(within(detalle).getByText('Historias 1')).toBeInTheDocument();
@@ -93,6 +93,7 @@ describe('Versiones', () => {
     fireEvent.click(await screen.findByRole('button', { name: '0.9.0' }));
 
     const detalle = await screen.findByRole('region', { name: '0.9.0' });
+    expect(within(detalle).getByText('Publicada el 30/10/2026 por Martina Ferreyra')).toBeInTheDocument();
     expect(within(detalle).getByText('Una versión publicada no se modifica: sus tareas y su changelog quedan como estaban al publicarla.')).toBeInTheDocument();
     expect(within(detalle).queryByRole('button', { name: /Agregar tareas/ })).not.toBeInTheDocument();
     expect(within(detalle).queryByRole('button', { name: 'Publicar versión' })).not.toBeInTheDocument();

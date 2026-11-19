@@ -143,16 +143,32 @@ describe('Planificacion', () => {
     await vi.waitFor(() => expect(pedidos.find((p) => p.ruta === '/api/sprint/s15/quitar')?.cuerpo).toEqual({ tareas: ['u-SHI-150'] }));
   });
 
-  it('los sprints cerrados se consultan y se archivan', async () => {
-    const pedidos = api({ 'POST /api/sprint/s13/archivar': { cuerpo: {} } });
+  it('el sprint cerrado muestra quién lo cerró y qué pasó con cada tarea, y se archiva', async () => {
+    const pedidos = api({
+      'GET /api/sprint/s13/cierre': { cuerpo: { uuid: 's13', cerradoPorNombre: 'Martina Ferreyra', fechaDeCierre: '2026-11-06T18:00:00.000-03:00', tareas: [
+        { uuid: 'u-SHI-104', clave: 'SHI-104', titulo: 'Ingreso con Google', tableroCodigo: 'PRINCIPAL', estadoAlCerrar: 'Hecho', terminada: true, puntos: 5, destino: 'TERMINADA', sprintDestinoNombre: null },
+        { uuid: 'u-SHI-128', clave: 'SHI-128', titulo: 'Importar sprints', tableroCodigo: 'PRINCIPAL', estadoAlCerrar: 'En curso', terminada: false, puntos: 3, destino: 'SPRINT', sprintDestinoNombre: 'Sprint 14' },
+        { uuid: 'u-SHI-160', clave: 'SHI-160', titulo: 'Restaurar subtareas', tableroCodigo: 'QA', estadoAlCerrar: 'Por probar', terminada: false, puntos: null, destino: 'BACKLOG', sprintDestinoNombre: null },
+      ] } },
+      'POST /api/sprint/s13/archivar': { cuerpo: {} },
+    });
     mostrar();
 
     fireEvent.click(await screen.findByRole('button', { name: 'Sprints cerrados (1)' }));
     const cerrado = await screen.findByRole('region', { name: 'Sprint 13' });
-    expect(within(cerrado).getByText('Cerrado')).toBeInTheDocument();
-    expect(await within(cerrado).findByText('Ingreso con Google')).toBeInTheDocument();
-    fireEvent.click(within(cerrado).getByRole('button', { name: 'Archivar sprint' }));
+    expect(await within(cerrado).findByText('26/10/2026 – 06/11/2026 · cerrado el 06/11/2026 por Martina Ferreyra')).toBeInTheDocument();
+    expect(within(cerrado).getByText('Terminadas 1 de 3')).toBeInTheDocument();
+    expect(within(cerrado).getByText('Puntos hechos 5 de 8')).toBeInTheDocument();
+    expect(within(cerrado).getByText('Pasaron al Sprint 14: 1')).toBeInTheDocument();
+    expect(within(cerrado).getByText('Volvieron al backlog: 1')).toBeInTheDocument();
+    const tabla = within(cerrado).getByRole('table', { name: 'Tareas del sprint' });
+    expect(within(tabla).getByRole('row', { name: /SHI-128 Importar sprints Principal En curso Sprint 14/ })).toBeInTheDocument();
+    expect(within(tabla).getByRole('row', { name: /SHI-160 Restaurar subtareas QA Por probar Backlog/ })).toBeInTheDocument();
 
+    fireEvent.click(within(cerrado).getByRole('radio', { name: 'Sin terminar' }));
+    expect(within(tabla).queryByText('Ingreso con Google')).not.toBeInTheDocument();
+
+    fireEvent.click(within(cerrado).getByRole('button', { name: 'Archivar sprint' }));
     await vi.waitFor(() => expect(pedidos.some((p) => p.ruta === '/api/sprint/s13/archivar')).toBe(true));
   });
 

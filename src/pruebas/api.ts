@@ -132,8 +132,9 @@ export function tareaDePlan(clave: string, titulo: string, extra: Record<string,
 
 // Versiones del proyecto (POST /version/paginar)
 export const VERSIONES = [
-  { uuid: 'v10', nombre: '1.0.0', estado: 'SIN_PUBLICAR', fechaDePublicacion: null, proyectoUuid: 'p1' },
-  { uuid: 'v09', nombre: '0.9.0', estado: 'PUBLICADA', fechaDePublicacion: '2026-10-30', proyectoUuid: 'p1' },
+  { uuid: 'v10', nombre: '1.0.0', estado: 'SIN_PUBLICAR', fechaDePublicacion: null, proyectoUuid: 'p1', cantidadDeTareas: 3, publicadaPorNombre: null },
+  { uuid: 'v09', nombre: '0.9.0', estado: 'PUBLICADA', fechaDePublicacion: '2026-10-30', proyectoUuid: 'p1', cantidadDeTareas: 27,
+    publicadaPorNombre: 'Martina Ferreyra' },
 ];
 
 // Tareas de una version (GET /version/{uuid}/tareas)
