@@ -1,5 +1,5 @@
 // Versiones de un proyecto (T6.3, prototipos "Versiones" y "Versión publicada"): la lista con su estado y fecha de
-// publicación y el detalle de la elegida (por defecto la primera sin publicar): cuántas tareas tiene por tipo y
+// publicación y cantidad de tareas, y el detalle de la elegida (con quién la publicó) (por defecto la primera sin publicar): cuántas tareas tiene por tipo y
 // cuántas están hechas, su changelog en Markdown (para copiar) y sus tareas. Una sin publicar recibe y suelta tareas
 // y se publica; una publicada no se modifica. Las dos se archivan.
 import { useEffect, useId, useState } from 'react';
@@ -92,13 +92,14 @@ export function Versiones({ proyecto, tiposDeTablero }: Props) {
         {versiones.length > 0 && (
           <div className="ui-card ui-table-wrap">
             <table className="ui-table" aria-label="Versiones">
-              <thead><tr><th>Versión</th><th>Estado</th><th>Publicación</th></tr></thead>
+              <thead><tr><th>Versión</th><th>Estado</th><th>Publicación</th><th>Tareas</th></tr></thead>
               <tbody>
                 {versiones.map((v) => (
                   <tr key={v.uuid} aria-selected={v.uuid === uuidElegido}>
                     <td><button className="sh-boton-enlace" type="button" onClick={() => setElegida(v.uuid)}>{v.nombre}</button></td>
                     <td>{v.estado === 'PUBLICADA' ? 'Publicada' : 'Sin publicar'}</td>
                     <td>{v.fechaDePublicacion ? fecha(v.fechaDePublicacion) : '—'}</td>
+                    <td>{v.cantidadDeTareas ?? '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -110,7 +111,7 @@ export function Versiones({ proyecto, tiposDeTablero }: Props) {
             <div className="ui-row">
               <h2 className="ui-card-title" id={`${id}-v`}>{version.nombre}</h2>
               <span className={`ui-chip ${sinPublicar ? 'is-info' : 'is-success'}`}>
-                {sinPublicar ? 'Sin publicar' : `Publicada el ${fecha(version.fechaDePublicacion)}`}
+                {sinPublicar ? 'Sin publicar' : 'Publicada'}
               </span>
               <span className="ui-spacer" />
               {sinPublicar && delElegido && <button className="ui-btn" type="button" onClick={() => setModal('agregar')}>{`Agregar tareas a ${version.nombre}`}</button>}
@@ -120,6 +121,11 @@ export function Versiones({ proyecto, tiposDeTablero }: Props) {
                 setElegida(null);
               }, `Se archivó ${version.nombre}.`)}><Icono nombre="archivo" />Archivar</button>
             </div>
+            {!sinPublicar && (
+              <p className="ui-muted" style={{ margin: 0 }}>
+                {`Publicada el ${fecha(version.fechaDePublicacion)}${version.publicadaPorNombre ? ` por ${version.publicadaPorNombre}` : ''}`}
+              </p>
+            )}
             {!sinPublicar && <p className="ui-help" style={{ margin: 0 }}>Una versión publicada no se modifica: sus tareas y su changelog quedan como estaban al publicarla.</p>}
             {!delElegido && <div className="ui-skel sh-task-skel" aria-hidden="true" />}
             {delElegido && (
