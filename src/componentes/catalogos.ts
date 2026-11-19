@@ -87,3 +87,18 @@ export function autor(nombre: string | null, canal: string | null): string {
   const base = nombre ?? 'Alguien';
   return canal === 'MCP' ? `${base} (vía MCP)` : base;
 }
+
+// Nombre del tablero de un proyecto por su codigo (Principal, QA...), o el codigo si no esta
+export function nombreDeTablero(tableros: { tipoTableroCodigo: string; tipoTableroNombre: string }[], codigo: string | null): string {
+  return tableros.find((t) => t.tipoTableroCodigo === codigo)?.tipoTableroNombre ?? codigo ?? '';
+}
+
+// Uuids de los estados terminados de todos los tipos de tablero (Hecho, Aprobado...)
+export function estadosTerminados(tipos: { estados: { uuid: string; terminado: boolean }[] }[]): Set<string> {
+  return new Set(tipos.flatMap((t) => t.estados.filter((e) => e.terminado).map((e) => e.uuid)));
+}
+
+// Hoy en GMT-3 como aaaa-mm-dd (para los campos de fecha)
+export function hoy(): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date());
+}

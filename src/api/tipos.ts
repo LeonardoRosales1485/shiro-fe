@@ -104,3 +104,34 @@ export type DatoAClonar = 'DESCRIPCION' | 'PRIORIDAD' | 'ETIQUETAS' | 'PUNTOS' |
 export function igual(campo: string, valor: string): Filtro {
   return { campo, operacion: '=', valor };
 }
+
+export type EstadoDeSprint = 'PLANIFICADO' | 'ACTIVO' | 'CERRADO';
+
+export type SprintDTO = { uuid: string; nombre: string; estado: EstadoDeSprint; inicio: string; fin: string; proyectoUuid: string };
+
+// Tarea en un sprint o en el backlog (POST /tarea/paginar o GET /proyecto/{uuid}/backlog): lo que muestran las listas
+export type TareaDePlanDTO = {
+  uuid: string;
+  clave: string;
+  titulo: string;
+  tipoCodigo: string;
+  estadoUuid?: string | null;
+  estadoNombre: string | null;
+  tableroCodigo: string | null;
+  puntos: number | null;
+  responsableNombre: string | null;
+};
+
+export type VersionDTO = { uuid: string; nombre: string; estado: 'SIN_PUBLICAR' | 'PUBLICADA'; fechaDePublicacion: string | null; proyectoUuid: string };
+
+// Tarea de una version (GET /version/{uuid}/tareas)
+export type TareaDeVersionDTO = {
+  uuid: string;
+  clave: string;
+  titulo: string;
+  tipoCodigo: string;
+  tipoNombre: string | null;
+  tableroCodigo: string | null;
+  estadoNombre: string | null;
+  terminada: boolean;
+};
