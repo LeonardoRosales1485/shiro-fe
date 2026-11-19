@@ -8,7 +8,7 @@ describe('Ingreso', () => {
   afterEach(() => vi.unstubAllGlobals());
 
   const ingresar = (usuario: string, contrasena: string) => {
-    fireEvent.change(screen.getByLabelText('Usuario o correo'), { target: { value: usuario } });
+    fireEvent.change(screen.getByLabelText('Usuario'), { target: { value: usuario } });
     fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: contrasena } });
     fireEvent.click(screen.getByRole('button', { name: 'Ingresar' }));
   };

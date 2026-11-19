@@ -7,7 +7,7 @@ import { App } from './App';
 
 const CON_SESION = {
   'GET /api/usuario/sesion': { cuerpo: { uuid: 'u1', nombreDeUsuario: 'demo', email: 'demo@example.local' } },
-  'GET /api/usuario/u1/grupos': { cuerpo: [{ uuid: 'g1', nombre: 'ADMIN' }] },
+  'GET /api/usuario/sesion/grupos': { cuerpo: { grupos: [{ uuid: 'g1', nombre: 'ADMIN' }], esAdministrador: true } },
   'POST /api/proyecto/paginar': { cuerpo: pagina([PROYECTO]) },
   'GET /api/tipo-tablero/listar': { cuerpo: TIPOS_DE_TABLERO },
   'GET /api/tipo-tarea/listar': { cuerpo: TIPOS_DE_TAREA },
@@ -46,6 +46,22 @@ describe('App', () => {
     render(<App />);
 
     expect(await screen.findByRole('button', { name: 'Crear proyecto' })).toBeInTheDocument();
+  });
+
+  it('un usuario sin administración no ve crear proyecto', async () => {
+    simularApi({ ...CON_SESION, 'GET /api/usuario/sesion/grupos': { cuerpo: { grupos: [], esAdministrador: false } } });
+    render(<App />);
+
+    expect(await screen.findByText('Login')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Crear proyecto' })).not.toBeInTheDocument();
+  });
+
+  it('el tema por defecto es oscuro', async () => {
+    window.localStorage.clear();
+    simularApi(CON_SESION);
+    render(<App />);
+
+    expect(await screen.findByRole('button', { name: 'Pasar a modo claro' })).toBeInTheDocument();
   });
 
   it('salir cierra la sesión y vuelve al ingreso', async () => {
