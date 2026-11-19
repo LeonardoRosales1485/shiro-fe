@@ -3,7 +3,7 @@
 import { vi } from 'vitest';
 import type { TareaDetalleDTO } from '../api/tipos';
 
-export type Respuesta = { status?: number; cuerpo?: unknown };
+export type Respuesta = { status?: number; cuerpo?: unknown; texto?: string };
 
 export type Pedido = { metodo: string; ruta: string; cuerpo: unknown };
 
@@ -18,6 +18,9 @@ export function simularApi(rutas: Record<string, Respuesta | ((cuerpo: unknown) 
     const respuesta = typeof definida === 'function' ? definida(cuerpo) : definida;
     if (!respuesta) {
       return new Response(JSON.stringify({ codigo: 'NO_ENCONTRADO', mensajeParaUsuario: 'No existe' }), { status: 404 });
+    }
+    if (respuesta.texto !== undefined) {
+      return new Response(respuesta.texto, { status: respuesta.status ?? 200, headers: { 'Content-Type': 'text/markdown' } });
     }
     return new Response(respuesta.cuerpo === undefined ? null : JSON.stringify(respuesta.cuerpo), { status: respuesta.status ?? 200 });
   }));
@@ -112,4 +115,33 @@ export const USUARIOS_DEL_PROYECTO = [
   { uuid: 'us2', nombreDeUsuario: 'carla', nombre: 'Carla Domínguez' },
   { uuid: 'us1', nombreDeUsuario: 'lucas', nombre: 'Lucas Benítez' },
   { uuid: 'us3', nombreDeUsuario: 'sinnombre', nombre: null },
+];
+
+// Sprints del proyecto (POST /sprint/paginar)
+export const SPRINTS = [
+  { uuid: 's13', nombre: 'Sprint 13', estado: 'CERRADO', inicio: '2026-10-26', fin: '2026-11-06', proyectoUuid: 'p1' },
+  { uuid: 's14', nombre: 'Sprint 14', estado: 'ACTIVO', inicio: '2026-11-09', fin: '2026-11-20', proyectoUuid: 'p1' },
+  { uuid: 's15', nombre: 'Sprint 15', estado: 'PLANIFICADO', inicio: '2026-11-23', fin: '2026-12-04', proyectoUuid: 'p1' },
+];
+
+// Tarea de un sprint o del backlog, con su tablero
+export function tareaDePlan(clave: string, titulo: string, extra: Record<string, unknown> = {}) {
+  return { uuid: `u-${clave}`, clave, titulo, estadoUuid: 'e1', estadoNombre: 'Por hacer', tipoCodigo: 'TAREA', prioridad: 'MEDIA',
+    puntos: null, responsableNombre: null, tableroCodigo: 'PRINCIPAL', tableroUuid: 't1', ...extra };
+}
+
+// Versiones del proyecto (POST /version/paginar)
+export const VERSIONES = [
+  { uuid: 'v10', nombre: '1.0.0', estado: 'SIN_PUBLICAR', fechaDePublicacion: null, proyectoUuid: 'p1' },
+  { uuid: 'v09', nombre: '0.9.0', estado: 'PUBLICADA', fechaDePublicacion: '2026-10-30', proyectoUuid: 'p1' },
+];
+
+// Tareas de una version (GET /version/{uuid}/tareas)
+export const TAREAS_DE_VERSION = [
+  { uuid: 'u-SHI-104', clave: 'SHI-104', titulo: 'Ingreso con Google', tipoCodigo: 'HISTORIA', tipoNombre: 'Historia',
+    tableroCodigo: 'PRINCIPAL', estadoNombre: 'Hecho', terminada: true },
+  { uuid: 'u-SHI-118', clave: 'SHI-118', titulo: 'Columnas fijas', tipoCodigo: 'TAREA', tipoNombre: 'Tarea',
+    tableroCodigo: 'PRINCIPAL', estadoNombre: 'En curso', terminada: false },
+  { uuid: 'u-SHI-098', clave: 'SHI-098', titulo: 'Token revocado', tipoCodigo: 'BUG', tipoNombre: 'Bug',
+    tableroCodigo: 'QA', estadoNombre: 'Aprobado', terminada: true },
 ];
