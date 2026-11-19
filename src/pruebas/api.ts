@@ -1,6 +1,7 @@
 // Doble de la API para las pruebas: reemplaza fetch y responde segun "METODO /api/ruta". Guarda cada pedido con su
 // cuerpo para verificar que mando el front. Una ruta sin respuesta responde 404.
 import { vi } from 'vitest';
+import type { TareaDetalleDTO } from '../api/tipos';
 
 export type Respuesta = { status?: number; cuerpo?: unknown };
 
@@ -66,7 +67,7 @@ export function pagina<T>(contenido: T[]) {
 }
 
 // Detalle completo de una tarea (GET /tarea/uuid/{uuid})
-export function tareaDetalle(extra: Record<string, unknown> = {}) {
+export function tareaDetalle(extra: Record<string, unknown> = {}): TareaDetalleDTO {
   return {
     uuid: 'u-SHI-149', clave: 'SHI-149', titulo: 'Clave duplicada al crear dos tareas a la vez', tipoCodigo: 'BUG', tipoNombre: 'Bug',
     descripcion: 'Si dos personas crean una tarea a la vez, reciben la misma clave.', estadoUuid: 'e2', estadoNombre: 'En curso',
@@ -80,7 +81,7 @@ export function tareaDetalle(extra: Record<string, unknown> = {}) {
     ],
     fechaDeCreacion: '2026-11-18T11:05:00.000-03:00', fechaDeActualizacion: '2026-11-18T15:42:00.000-03:00',
     ...extra,
-  };
+  } as TareaDetalleDTO;
 }
 
 export const RELACIONES = [
