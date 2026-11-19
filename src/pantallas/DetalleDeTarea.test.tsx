@@ -23,7 +23,7 @@ function api(extra: Record<string, Respuesta | ((cuerpo: unknown) => Respuesta)>
 
 function mostrar() {
   return render(<DetalleDeTarea proyecto={PROYECTO} clave="SHI-149" tiposDeTablero={TIPOS_DE_TABLERO} tiposDeTarea={TIPOS_DE_TAREA}
-    usuario={USUARIO} esAdministrador={false} />);
+    usuario={USUARIO} />);
 }
 
 describe('DetalleDeTarea', () => {
