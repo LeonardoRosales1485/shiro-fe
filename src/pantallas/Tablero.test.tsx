@@ -1,5 +1,5 @@
 // T6.1: el tablero muestra una columna por estado de su tipo, con sus tareas, y el estado vacío del proyecto nuevo.
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { pagina, PROYECTO, simularApi, tarea, TIPOS_DE_TABLERO } from '../pruebas/api';
 import { Tablero } from './Tablero';
@@ -23,6 +23,17 @@ describe('Tablero', () => {
     expect(within(screen.getByRole('region', { name: 'Hecho' })).getByText('1')).toBeInTheDocument();
     const filtro = (pedidos[0].cuerpo as { filtros: unknown[][] }).filtros[0][0];
     expect(filtro).toEqual({ campo: 'tablero.uuid', operacion: '=', valor: 't1' });
+  });
+
+  it('cada tarjeta lleva al detalle de su tarea', async () => {
+    simularApi({ 'POST /api/tarea/paginar': { cuerpo: pagina([tarea('SHI-1', 'Login', 'e1')]) } });
+    mostrar();
+
+    const enlace = await screen.findByRole('link', { name: /Login/ });
+    expect(enlace).toHaveAttribute('href', '/proyecto/SHI/tarea/SHI-1');
+    fireEvent.click(enlace);
+    expect(window.location.pathname).toBe('/proyecto/SHI/tarea/SHI-1');
+    window.history.replaceState(null, '', '/');
   });
 
   it('un proyecto sin tareas muestra cómo empezar', async () => {

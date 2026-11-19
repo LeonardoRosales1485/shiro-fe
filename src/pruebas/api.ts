@@ -64,3 +64,44 @@ export function tarea(clave: string, titulo: string, estadoUuid: string, extra: 
 export function pagina<T>(contenido: T[]) {
   return { contenido, totalDeElementos: contenido.length, pagina: 1, tamano: 500 };
 }
+
+// Detalle completo de una tarea (GET /tarea/uuid/{uuid})
+export function tareaDetalle(extra: Record<string, unknown> = {}) {
+  return {
+    uuid: 'u-SHI-149', clave: 'SHI-149', titulo: 'Clave duplicada al crear dos tareas a la vez', tipoCodigo: 'BUG', tipoNombre: 'Bug',
+    descripcion: 'Si dos personas crean una tarea a la vez, reciben la misma clave.', estadoUuid: 'e2', estadoNombre: 'En curso',
+    prioridad: 'MAS_ALTA', puntos: 3, tableroUuid: 't1', tableroCodigo: 'PRINCIPAL', proyectoUuid: 'p1',
+    responsableUuid: 'us1', responsableNombre: 'Lucas Benítez', informanteUuid: 'us2', informanteNombre: 'Carla Domínguez',
+    padreUuid: null, padreClave: null, sprintUuid: 's14', sprintNombre: 'Sprint 14', vencimiento: '2026-11-20',
+    etiquetas: [{ texto: 'claves' }, { texto: 'concurrencia' }], versiones: [{ versionUuid: 'v1', nombre: '1.0.0', estado: 'SIN_PUBLICAR' }],
+    hijas: [
+      { uuid: 'u-SHI-152', clave: 'SHI-152', titulo: 'Secuencia por proyecto', tipoCodigo: 'SUBTAREA', estadoNombre: 'Hecho' },
+      { uuid: 'u-SHI-153', clave: 'SHI-153', titulo: 'Prueba de concurrencia', tipoCodigo: 'SUBTAREA', estadoNombre: 'En curso' },
+    ],
+    fechaDeCreacion: '2026-11-18T11:05:00.000-03:00', fechaDeActualizacion: '2026-11-18T15:42:00.000-03:00',
+    ...extra,
+  };
+}
+
+export const RELACIONES = [
+  { uuid: 'r1', vinculo: 'CLONADA_DE', tareaUuid: 'u-SHI-147', tareaClave: 'SHI-147', tareaTitulo: 'Dos tareas con la misma clave',
+    tareaEstadoNombre: 'Probando', tareaArchivada: false },
+  { uuid: 'r2', vinculo: 'BLOQUEA', tareaUuid: 'u-SHI-128', tareaClave: 'SHI-128', tareaTitulo: 'Importar sprints',
+    tareaEstadoNombre: 'En curso', tareaArchivada: false },
+];
+
+export const COMENTARIOS = [
+  { uuid: 'c1', tareaUuid: 'u-SHI-149', cuerpo: 'Se reproduce 3 de cada 10 veces.', autorNombre: 'Carla Domínguez', canal: 'WEB',
+    fecha: '2026-11-18T11:06:00.000-03:00' },
+  { uuid: 'c2', tareaUuid: 'u-SHI-149', cuerpo: 'Cambio la generación de claves.', autorNombre: 'Lucas Benítez', canal: 'MCP',
+    fecha: '2026-11-18T15:41:00.000-03:00' },
+];
+
+export const HISTORIAL = [
+  { uuid: 'h1', accion: 'MOVER', campo: 'estado', valorAnterior: 'Por hacer', valorNuevo: 'En curso', canal: 'WEB',
+    usuarioNombre: 'Lucas Benítez', fechaDeCreacion: '2026-11-18T15:42:00.000-03:00' },
+  { uuid: 'h2', accion: 'EDITAR', campo: 'puntos', valorAnterior: null, valorNuevo: '3', canal: 'MCP',
+    usuarioNombre: 'Lucas Benítez', fechaDeCreacion: '2026-11-18T15:40:00.000-03:00' },
+];
+
+export const USUARIO = { uuid: 'us1', nombreDeUsuario: 'lucas', email: null };
