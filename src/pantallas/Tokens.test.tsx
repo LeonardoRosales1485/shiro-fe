@@ -6,11 +6,14 @@ import { error, simularApi, type Respuesta } from '../pruebas/api';
 import { Tokens } from './Tokens';
 
 const TOKENS = [
-  { uuid: 'k1', nombre: 'Claude Code · escritorio', activo: 1, fechaDeCreacion: '2026-11-02T10:00:00.000-03:00', codigo: null },
+  { uuid: 'k1', nombre: 'Claude Code · escritorio', activo: true, fechaDeCreacion: '2026-11-02T10:00:00.000-03:00', fechaDeRevocacion: null,
+    ultimoUso: '2026-11-18T15:40:00.000-03:00' },
+  { uuid: 'k0', nombre: 'Agente de pruebas', activo: false, fechaDeCreacion: '2026-10-20T10:00:00.000-03:00', fechaDeRevocacion: '2026-10-29T09:12:00.000-03:00',
+    ultimoUso: null },
 ];
 
 function api(extra: Record<string, Respuesta | ((cuerpo: unknown) => Respuesta)> = {}) {
-  return simularApi({ 'GET /api/usuario/tokens': { cuerpo: TOKENS }, ...extra });
+  return simularApi({ 'GET /api/usuario/mis-tokens': { cuerpo: TOKENS }, ...extra });
 }
 
 describe('Tokens', () => {
@@ -21,7 +24,9 @@ describe('Tokens', () => {
     render(<Tokens nombreDelUsuario="Martina Ferreyra" />);
 
     const tabla = await screen.findByRole('table', { name: 'Tokens' });
-    expect(within(tabla).getByRole('row', { name: /Claude Code · escritorio 02\/11\/2026 Activo/ })).toBeInTheDocument();
+    expect(within(tabla).getByRole('row', { name: /Claude Code · escritorio 02\/11\/2026 18\/11\/2026 15:40 Activo/ })).toBeInTheDocument();
+    expect(within(tabla).getByRole('row', { name: /Agente de pruebas 20\/10\/2026 — Revocado el 29\/10\/2026/ })).toBeInTheDocument();
+    expect(within(tabla).queryByRole('button', { name: 'Revocar Agente de pruebas' })).not.toBeInTheDocument();
     expect(screen.getByText(/Sus cambios quedan como «Martina Ferreyra \(vía MCP\)»/)).toBeInTheDocument();
     expect(screen.getByText(`${window.location.origin}/api/mcp`)).toBeInTheDocument();
   });
@@ -56,7 +61,7 @@ describe('Tokens', () => {
     expect(await within(dialogo).findByRole('alert')).toHaveTextContent('Ya tenés un token con ese nombre.');
   });
 
-  it('revocar pide confirmación y lo saca de la lista', async () => {
+  it('revocar pide confirmación y vuelve a leer la lista', async () => {
     const pedidos = api({ 'DELETE /api/usuario/borrar-token/k1': { cuerpo: {} } });
     render(<Tokens nombreDelUsuario="Martina Ferreyra" />);
 
@@ -65,6 +70,6 @@ describe('Tokens', () => {
 
     expect(await screen.findByRole('status')).toHaveTextContent('Se revocó «Claude Code · escritorio». Deja de funcionar al instante.');
     expect(pedidos.some((p) => p.metodo === 'DELETE' && p.ruta === '/api/usuario/borrar-token/k1')).toBe(true);
-    expect(screen.queryByRole('row', { name: /Claude Code · escritorio/ })).not.toBeInTheDocument();
+    expect(pedidos.filter((p) => p.ruta === '/api/usuario/mis-tokens').length).toBe(2);
   });
 });

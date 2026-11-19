@@ -25,6 +25,13 @@ const ultimo = (pedidos: Pedido[]) => pedidos.filter((p) => p.ruta === '/api/tar
   filtros: { campo: string; valor: string }[][]; parametros?: { nombre: string; valor: string }[]; pagina: number;
 };
 
+// Marca una opcion de un filtro de varios valores (si esperar, espera a que el filtro aparezca)
+function elegir(filtro: string, opcion: string, esperar = false) {
+  const grupo = screen.getAllByRole('group', { name: filtro })[0];
+  void esperar;
+  fireEvent.click(within(grupo).getByRole('checkbox', { name: opcion }));
+}
+
 const mostrar = () => render(<Busqueda proyectos={[PROYECTO]} tiposDeTablero={TIPOS_DE_TABLERO} tiposDeTarea={TIPOS_DE_TAREA} usuario={USUARIO} />);
 
 describe('Busqueda', () => {
@@ -41,25 +48,27 @@ describe('Busqueda', () => {
     expect(within(tabla).getByRole('link', { name: 'SHI-128' })).toHaveAttribute('href', '/proyecto/SHI/tarea/SHI-128');
   });
 
-  it('el texto y los filtros arman el pedido', async () => {
+  it('el texto y los filtros arman el pedido; varios valores de un filtro se combinan con O', async () => {
     const pedidos = api();
     mostrar();
 
     fireEvent.change(await screen.findByLabelText('Buscar'), { target: { value: 'importar' } });
     fireEvent.change(screen.getByLabelText('Proyecto'), { target: { value: 'p1' } });
-    fireEvent.change(screen.getByLabelText('Tablero'), { target: { value: 'QA' } });
-    fireEvent.change(screen.getByLabelText('Tipo'), { target: { value: 'BUG' } });
+    elegir('Tablero', 'QA');
+    elegir('Tipo', 'Bug');
+    elegir('Tipo', 'Historia');
     fireEvent.change(screen.getByLabelText('Etiqueta'), { target: { value: 'importador' } });
-    fireEvent.change(await screen.findByLabelText('Sprint'), { target: { value: 's14' } });
+    elegir('Sprint', 'Sprint 14', true);
+    elegir('Sprint', 'Sin sprint (backlog)');
     fireEvent.change(screen.getByLabelText('Versión'), { target: { value: 'v10' } });
 
     await vi.waitFor(() => {
       const pedido = ultimo(pedidos);
-      expect(pedido.filtros.map((g) => g[0])).toEqual(expect.arrayContaining([
-        { campo: 'proyecto.uuid', operacion: '=', valor: 'p1' },
-        { campo: 'tablero.tipoTablero.codigo', operacion: '=', valor: 'QA' },
-        { campo: 'tipo.codigo', operacion: '=', valor: 'BUG' },
-        { campo: 'sprint.uuid', operacion: '=', valor: 's14' },
+      expect(pedido.filtros).toEqual(expect.arrayContaining([
+        [{ campo: 'proyecto.uuid', operacion: '=', valor: 'p1' }],
+        [{ campo: 'tablero.tipoTablero.codigo', operacion: '=', valor: 'QA' }],
+        [{ campo: 'tipo.codigo', operacion: '=', valor: 'BUG' }, { campo: 'tipo.codigo', operacion: '=', valor: 'HISTORIA' }],
+        [{ campo: 'sprint.uuid', operacion: '=', valor: 's14' }, { campo: 'sprint.uuid', operacion: 'is null', valor: '' }],
       ]));
       expect(pedido.parametros).toEqual(expect.arrayContaining([
         { nombre: 'texto', valor: 'importar' }, { nombre: 'etiqueta', valor: 'importador' }, { nombre: 'version', valor: 'v10' },
@@ -83,9 +92,10 @@ describe('Busqueda', () => {
     const pedidos = api();
     mostrar();
 
-    expect(screen.queryByLabelText('Responsable')).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Responsable' })).not.toBeInTheDocument();
     fireEvent.change(await screen.findByLabelText('Proyecto'), { target: { value: 'p1' } });
-    fireEvent.change(await screen.findByLabelText('Responsable'), { target: { value: 'us2' } });
+    await screen.findByRole('group', { name: 'Responsable' });
+    elegir('Responsable', 'Carla Domínguez');
 
     await vi.waitFor(() => expect(ultimo(pedidos).filtros.map((g) => g[0])).toContainEqual({ campo: 'responsable.uuid', operacion: '=', valor: 'us2' }));
   });
