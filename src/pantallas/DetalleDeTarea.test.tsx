@@ -4,7 +4,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   COMENTARIOS, error, HISTORIAL, pagina, PROYECTO, RELACIONES, simularApi, tarea, tareaDetalle, TIPOS_DE_TABLERO, TIPOS_DE_TAREA,
-  USUARIO, type Respuesta,
+  USUARIO, USUARIOS_DEL_PROYECTO, type Respuesta,
 } from '../pruebas/api';
 import { DetalleDeTarea } from './DetalleDeTarea';
 
@@ -16,6 +16,7 @@ function api(extra: Record<string, Respuesta | ((cuerpo: unknown) => Respuesta)>
     'GET /api/tarea/u-SHI-149/relaciones': { cuerpo: RELACIONES },
     'POST /api/comentario/paginar': { cuerpo: pagina(COMENTARIOS) },
     'GET /api/tarea/u-SHI-149/historial': { cuerpo: HISTORIAL },
+    'GET /api/proyecto/p1/usuarios': { cuerpo: USUARIOS_DEL_PROYECTO },
     ...extra,
   });
 }
@@ -112,6 +113,51 @@ describe('DetalleDeTarea', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('La tarea cambió mientras la editabas.');
     expect(screen.getByLabelText('Título')).toHaveValue('Claves repetidas');
     expect(screen.getByRole('button', { name: 'Recargar' })).toBeInTheDocument();
+  });
+
+  it('cualquier usuario del proyecto elige al responsable entre los que tienen acceso', async () => {
+    const pedidos = api({ 'POST /api/tarea/guardar': (cuerpo) => ({ cuerpo: { ...tareaDetalle(), ...(cuerpo as object), responsableNombre: 'Carla Domínguez' } }) });
+    mostrar();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar' }));
+    const responsable = await screen.findByLabelText('Responsable');
+    expect(within(responsable).getByRole('option', { name: 'Carla Domínguez' })).toBeInTheDocument();
+    expect(within(responsable).getByRole('option', { name: 'sinnombre' })).toBeInTheDocument();
+    fireEvent.change(responsable, { target: { value: 'us2' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    await vi.waitFor(() => expect(pedidos.find((p) => p.ruta === '/api/tarea/guardar')?.cuerpo).toMatchObject({ responsableUuid: 'us2' }));
+  });
+
+  it('la descripción se dibuja como Markdown y al editar tiene vista previa', async () => {
+    api({ 'GET /api/tarea/uuid/u-SHI-149': { cuerpo: tareaDetalle({ descripcion: '**Pasos:** abrir dos sesiones' }) } });
+    mostrar();
+
+    expect((await screen.findByText('Pasos:')).tagName).toBe('STRONG');
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+    fireEvent.change(screen.getByLabelText('Descripción'), { target: { value: '**Esperado:** claves distintas' } });
+    fireEvent.click(screen.getByRole('tab', { name: 'Vista previa' }));
+
+    expect(screen.getByText('Esperado:').tagName).toBe('STRONG');
+    fireEvent.click(screen.getByRole('tab', { name: 'Escribir' }));
+    expect(screen.getByLabelText('Descripción')).toHaveValue('**Esperado:** claves distintas');
+  });
+
+  it('una épica agrega historias desde su detalle', async () => {
+    const pedidos = api({
+      'GET /api/tarea/uuid/u-SHI-149': { cuerpo: tareaDetalle({ tipoCodigo: 'EPICA', hijas: [] }) },
+      'POST /api/tarea/guardar': (cuerpo) => ({ cuerpo: { ...(cuerpo as object), uuid: 'u-SHI-161', clave: 'SHI-161' } }),
+    });
+    mostrar();
+
+    expect(await screen.findByRole('region', { name: 'Historias de la épica' })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Título de la nueva historia'), { target: { value: 'Ingreso con Google' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Agregar' }));
+
+    expect(await screen.findByText('SHI-161 · Ingreso con Google')).toBeInTheDocument();
+    expect(pedidos.find((p) => p.ruta === '/api/tarea/guardar')?.cuerpo).toEqual({
+      tableroUuid: 't1', tipoCodigo: 'HISTORIA', titulo: 'Ingreso con Google', padreUuid: 'u-SHI-149',
+    });
   });
 
   it('asignármela pone como responsable al usuario de la sesión', async () => {

@@ -106,3 +106,10 @@ export const HISTORIAL = [
 ];
 
 export const USUARIO = { uuid: 'us1', nombreDeUsuario: 'lucas', email: null };
+
+// Usuarios con acceso al proyecto (GET /proyecto/{uuid}/usuarios)
+export const USUARIOS_DEL_PROYECTO = [
+  { uuid: 'us2', nombreDeUsuario: 'carla', nombre: 'Carla Domínguez' },
+  { uuid: 'us1', nombreDeUsuario: 'lucas', nombre: 'Lucas Benítez' },
+  { uuid: 'us3', nombreDeUsuario: 'sinnombre', nombre: null },
+];
