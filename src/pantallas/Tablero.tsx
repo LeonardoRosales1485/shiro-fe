@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { mensajeDeError, pedir } from '../api/cliente';
 import { pedidoDePaginado, type Pagina, type ProyectoDTO, type TableroDTO, type TareaDTO, type TipoTableroDTO } from '../api/tipos';
 import { iniciales, PRIORIDADES, TIPOS, tituloDeTablero } from '../componentes/catalogos';
+import { Encabezado } from '../componentes/Encabezado';
 import { Icono } from '../componentes/Icono';
 import { href, navegar } from '../navegacion/ruta';
 import { rutaDeTarea } from './detalle/PanelDeDetalles';
@@ -34,20 +35,13 @@ export function Tablero({ proyecto, tablero, tipoDeTablero, version, alNuevaTare
 
   const estados = [...tipoDeTablero.estados].sort((a, b) => a.orden - b.orden);
   const tareas = carga.estado === 'listo' ? carga.tareas : [];
+  const titulo = tituloDeTablero(tablero.tipoTableroCodigo, tablero.tipoTableroNombre);
 
   return (
     <>
-      <div className="ui-page-head">
-        <ol className="ui-crumbs" aria-label="Ubicación">
-          <li><span>{proyecto.nombre}</span></li>
-          <li><span aria-current="page">{tituloDeTablero(tablero.tipoTableroCodigo, tablero.tipoTableroNombre)}</span></li>
-        </ol>
-      </div>
-      <div className="ui-page-head">
-        <h1 className="ui-page-title">{tituloDeTablero(tablero.tipoTableroCodigo, tablero.tipoTableroNombre)}</h1>
-        <span className="ui-spacer" />
+      <Encabezado migas={[proyecto.nombre, titulo]} titulo={titulo}>
         <button className="ui-btn solid" type="button" onClick={alNuevaTarea}><Icono nombre="mas" />Nueva tarea</button>
-      </div>
+      </Encabezado>
       {carga.estado === 'error' && (
         <div className="ui-alert is-danger" role="alert"><Icono nombre="alerta" /><span>{`No se pudieron cargar las tareas. ${carga.mensaje}`}</span></div>
       )}
