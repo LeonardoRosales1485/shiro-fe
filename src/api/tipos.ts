@@ -1,6 +1,6 @@
 // Tipos de los DTO del backend que usa el front (contrato en shiro-be/docs/api/openapi.yaml).
 
-export type UsuarioDTO = { uuid: string; nombreDeUsuario: string; email: string | null };
+export type UsuarioDTO = { uuid: string; nombreDeUsuario: string; email: string | null; nombre?: string | null };
 
 export type TableroDTO = { uuid: string; tipoTableroUuid: string; tipoTableroCodigo: string; tipoTableroNombre: string };
 

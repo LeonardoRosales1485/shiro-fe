@@ -1,6 +1,6 @@
 // Menu lateral (prototipo "Main"): marca, selector de proyecto, tableros del proyecto, administracion (solo
 // administradores), tema y salir. Se contrae a riel. Planificacion (backlog y sprints, versiones) llega en T6.3;
-// busqueda y cuenta se suman en las tareas siguientes de F6.
+// General (busqueda y archivados) y Cuenta (tokens MCP), en T6.4.
 import { useState, type MouseEvent } from 'react';
 import type { ProyectoDTO } from '../api/tipos';
 import { href, navegar } from '../navegacion/ruta';
@@ -22,6 +22,12 @@ type Props = {
 const PLANIFICACION: { seccion: string; nombre: string; icono: NombreDeIcono }[] = [
   { seccion: 'backlog', nombre: 'Backlog y sprints', icono: 'lista' },
   { seccion: 'versiones', nombre: 'Versiones', icono: 'caja' },
+];
+
+// Paginas generales del menu, que no dependen del proyecto (T6.4)
+const SECCIONES_GENERALES: { titulo: string; paginas: { seccion: string; nombre: string; icono: NombreDeIcono }[] }[] = [
+  { titulo: 'General', paginas: [{ seccion: 'busqueda', nombre: 'Búsqueda', icono: 'lupa' }, { seccion: 'archivados', nombre: 'Archivados', icono: 'archivo' }] },
+  { titulo: 'Cuenta', paginas: [{ seccion: 'tokens', nombre: 'Tokens MCP', icono: 'llave' }] },
 ];
 
 // Ruta del tablero de un proyecto
@@ -68,18 +74,15 @@ export function MenuLateral({ proyectos, proyecto, codigoDeTablero, seccion = nu
             );
           })}
           <div className="ui-side-title">Planificación</div>
-          {PLANIFICACION.map((p) => {
-            const ruta = `/proyecto/${proyecto.prefijo}/${p.seccion}`;
-            const activo = seccion === p.seccion;
-            return (
-              <a key={p.seccion} className={`ui-side-item ${activo ? 'active' : ''}`} href={href(ruta)} aria-current={activo ? 'page' : undefined}
-                title={p.nombre} onClick={ir(ruta)}>
-                <Icono nombre={p.icono} /><span>{p.nombre}</span>
-              </a>
-            );
-          })}
+          {PLANIFICACION.map((p) => <Enlace key={p.seccion} pagina={p} ruta={`/proyecto/${proyecto.prefijo}/${p.seccion}`} activo={seccion === p.seccion} />)}
         </>
       )}
+      {SECCIONES_GENERALES.map((grupo) => (
+        <div key={grupo.titulo} className="sh-grupo-menu">
+          <div className="ui-side-title">{grupo.titulo}</div>
+          {grupo.paginas.map((p) => <Enlace key={p.seccion} pagina={p} ruta={`/${p.seccion}`} activo={seccion === p.seccion} />)}
+        </div>
+      ))}
       {esAdministrador && (
         <>
           <div className="ui-side-title">Administración</div>
@@ -94,5 +97,18 @@ export function MenuLateral({ proyectos, proyecto, codigoDeTablero, seccion = nu
       </button>
       <button className="ui-side-item sh-side-btn" type="button" title="Salir" onClick={alSalir}><Icono nombre="salir" /><span>Salir</span></button>
     </nav>
+  );
+}
+
+// Enlace del menu a una pagina, con navegacion sin recargar y marca de la pagina actual
+function Enlace({ pagina, ruta, activo }: { pagina: { nombre: string; icono: NombreDeIcono }; ruta: string; activo: boolean }) {
+  return (
+    <a className={`ui-side-item ${activo ? 'active' : ''}`} href={href(ruta)} aria-current={activo ? 'page' : undefined} title={pagina.nombre}
+      onClick={(evento) => {
+        evento.preventDefault();
+        navegar(ruta);
+      }}>
+      <Icono nombre={pagina.icono} /><span>{pagina.nombre}</span>
+    </a>
   );
 }

@@ -9,14 +9,22 @@ import { CrearTareaModal } from '../componentes/CrearTareaModal';
 import { Icono } from '../componentes/Icono';
 import { MenuLateral, rutaDeTablero } from '../componentes/MenuLateral';
 import { navegar, useRuta } from '../navegacion/ruta';
+import { Archivados } from './Archivados';
+import { Busqueda } from './Busqueda';
 import { DetalleDeTarea } from './DetalleDeTarea';
 import { Planificacion } from './Planificacion';
 import { Tablero } from './Tablero';
+import { Tokens } from './Tokens';
 import { Versiones } from './Versiones';
 
 type Props = { usuario: UsuarioDTO; esAdministrador: boolean; alSalir: () => void };
 
 type Seccion = 'backlog' | 'versiones';
+
+// Paginas que no son de un proyecto (T6.4)
+type General = 'busqueda' | 'archivados' | 'tokens';
+
+const GENERALES: General[] = ['busqueda', 'archivados', 'tokens'];
 
 type Datos = { proyectos: ProyectoDTO[]; tiposDeTablero: TipoTableroDTO[]; tiposDeTarea: TipoTareaDTO[] };
 
@@ -59,7 +67,12 @@ export function Espacio({ usuario, esAdministrador, alSalir }: Props) {
   }, []);
 
   const elegida = leerRuta(ruta);
+  const general = GENERALES.find((g) => ruta === `/${g}`) ?? null;
+  const [ultimoPrefijo, setUltimoPrefijo] = useState<string | null>(null);
+  if (elegida && elegida.prefijo !== ultimoPrefijo) setUltimoPrefijo(elegida.prefijo);
   const proyecto = datos?.proyectos.find((p) => p.prefijo === elegida?.prefijo) ?? null;
+  // En las paginas generales el menu sigue mostrando el ultimo proyecto visitado
+  const proyectoDelMenu = proyecto ?? datos?.proyectos.find((p) => p.prefijo === ultimoPrefijo) ?? datos?.proyectos[0] ?? null;
   const tablero = proyecto?.tableros.find((t) => t.tipoTableroCodigo === elegida?.codigo) ?? null;
   const tipoDeTablero = datos?.tiposDeTablero.find((t) => t.uuid === tablero?.tipoTableroUuid) ?? null;
 
@@ -67,10 +80,10 @@ export function Espacio({ usuario, esAdministrador, alSalir }: Props) {
   const seccion = proyecto && elegida?.seccion ? elegida.seccion : null;
 
   useEffect(() => {
-    if (datos && !tablero && !clave && !seccion && datos.proyectos.length > 0) {
+    if (datos && !tablero && !clave && !seccion && !general && datos.proyectos.length > 0) {
       navegar(rutaDeTablero(datos.proyectos[0].prefijo, 'PRINCIPAL'), true);
     }
-  }, [datos, tablero, clave, seccion]);
+  }, [datos, tablero, clave, seccion, general]);
 
   const alCrearProyecto = (nuevo: ProyectoDTO) => {
     setModal(null);
@@ -80,7 +93,7 @@ export function Espacio({ usuario, esAdministrador, alSalir }: Props) {
 
   return (
     <div className="sh-espacio">
-      <MenuLateral proyectos={datos?.proyectos ?? []} proyecto={proyecto} codigoDeTablero={elegida?.codigo ?? null} seccion={seccion}
+      <MenuLateral proyectos={datos?.proyectos ?? []} proyecto={proyectoDelMenu} codigoDeTablero={elegida?.codigo ?? null} seccion={seccion ?? general}
         esAdministrador={esAdministrador} alCrearProyecto={() => setModal('proyecto')} alSalir={alSalir} />
       <main className="ui-main sh-principal">
         {error && <div className="ui-alert is-danger" role="alert"><Icono nombre="alerta" /><span>{error}</span></div>}
@@ -96,6 +109,11 @@ export function Espacio({ usuario, esAdministrador, alSalir }: Props) {
             </div>
           </section>
         )}
+        {general === 'busqueda' && datos && (
+          <Busqueda proyectos={datos.proyectos} tiposDeTablero={datos.tiposDeTablero} tiposDeTarea={datos.tiposDeTarea} usuario={usuario} />
+        )}
+        {general === 'archivados' && <Archivados esAdministrador={esAdministrador} />}
+        {general === 'tokens' && <Tokens nombreDelUsuario={usuario.nombre || usuario.nombreDeUsuario} />}
         {proyecto && seccion === 'backlog' && datos && <Planificacion key={proyecto.uuid} proyecto={proyecto} tiposDeTablero={datos.tiposDeTablero} />}
         {proyecto && seccion === 'versiones' && datos && <Versiones key={proyecto.uuid} proyecto={proyecto} tiposDeTablero={datos.tiposDeTablero} />}
         {proyecto && clave && datos && (
