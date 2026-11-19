@@ -1,6 +1,7 @@
 // Búsqueda de tareas (T6.4, prototipo "Búsqueda"): en todos los proyectos que el usuario ve, por texto (clave,
 // título o descripción) y con filtros de proyecto, tablero, tipo, estado, etiqueta y «Asignadas a mí». Con un
-// proyecto elegido se suman responsable (de los usuarios del proyecto), sprint y versión. Pagina de a 50.
+// proyecto elegido se suman responsable (de los usuarios del proyecto), sprint (con «Sin sprint») y versión. Tablero,
+// tipo, estado, responsable y sprint aceptan varios valores, que se combinan con O (propuesta 51). Pagina de a 50.
 import { useEffect, useId, useState } from 'react';
 import { mensajeDeError, pedir } from '../api/cliente';
 import {
@@ -28,40 +29,50 @@ type Resultado = {
 type Filtros = {
   texto: string;
   proyecto: string;
-  tablero: string;
-  tipo: string;
-  estado: string;
-  responsable: string;
-  sprint: string;
+  tableros: string[];
+  tipos: string[];
+  estados: string[];
+  responsables: string[];
+  sprints: string[];
   version: string;
   etiqueta: string;
   mias: boolean;
 };
 
-const VACIOS: Filtros = { texto: '', proyecto: '', tablero: '', tipo: '', estado: '', responsable: '', sprint: '', version: '', etiqueta: '', mias: false };
+type Multiple = 'tableros' | 'tipos' | 'estados' | 'responsables' | 'sprints';
+
+const VACIOS: Filtros = { texto: '', proyecto: '', tableros: [], tipos: [], estados: [], responsables: [], sprints: [], version: '', etiqueta: '', mias: false };
+
+// Valor de la opcion «Sin sprint (backlog)» del filtro de sprints
+const SIN_SPRINT = 'SIN_SPRINT';
 
 const POR_PAGINA = 50;
 
 // Catalogos del proyecto elegido para los filtros que dependen de el
 type DelProyecto = { proyecto: string; usuarios: UsuarioDelProyectoDTO[]; sprints: SprintDTO[]; versiones: VersionDTO[] };
 
-// Pedido de /tarea/paginar con los filtros (un grupo por filtro: se combinan con AND) y los parametros
+// Grupo de filtros por igualdad para los valores elegidos (dentro de un grupo se combinan con O)
+function grupo(campo: string, valores: string[]): Filtro[] {
+  return valores.map((valor) => igual(campo, valor));
+}
+
+// Pedido de /tarea/paginar con los filtros (un grupo por filtro: los grupos se combinan con Y) y los parametros
 function pedidoDeBusqueda(f: Filtros, usuario: string, pagina: number) {
-  const filtros: Filtro[] = [];
-  if (f.proyecto) filtros.push(igual('proyecto.uuid', f.proyecto));
-  if (f.tablero) filtros.push(igual('tablero.tipoTablero.codigo', f.tablero));
-  if (f.tipo) filtros.push(igual('tipo.codigo', f.tipo));
-  if (f.estado) filtros.push(igual('estado.uuid', f.estado));
-  if (f.mias) filtros.push(igual('responsable.uuid', usuario));
-  else if (f.proyecto && f.responsable) filtros.push(igual('responsable.uuid', f.responsable));
-  if (f.proyecto && f.sprint) filtros.push(igual('sprint.uuid', f.sprint));
+  const grupos: Filtro[][] = [];
+  if (f.proyecto) grupos.push([igual('proyecto.uuid', f.proyecto)]);
+  grupos.push(grupo('tablero.tipoTablero.codigo', f.tableros), grupo('tipo.codigo', f.tipos), grupo('estado.uuid', f.estados));
+  if (f.mias) grupos.push([igual('responsable.uuid', usuario)]);
+  else if (f.proyecto) grupos.push(grupo('responsable.uuid', f.responsables));
+  if (f.proyecto) {
+    grupos.push(f.sprints.map((s) => (s === SIN_SPRINT ? { campo: 'sprint.uuid', operacion: 'is null', valor: '' } : igual('sprint.uuid', s))));
+  }
   const parametros = [
     { nombre: 'texto', valor: f.texto.trim() },
     { nombre: 'etiqueta', valor: f.etiqueta.trim() },
     { nombre: 'version', valor: f.proyecto ? f.version : '' },
   ].filter((p) => p.valor);
   return {
-    pagina, tamano: POR_PAGINA, filtros: filtros.map((filtro) => [filtro]), ordenes: [{ campo: 'numero', direccion: 'desc' }],
+    pagina, tamano: POR_PAGINA, filtros: grupos.filter((g) => g.length > 0), ordenes: [{ campo: 'numero', direccion: 'desc' }],
     ...(parametros.length ? { parametros } : {}),
   };
 }
@@ -106,11 +117,15 @@ export function Busqueda({ proyectos, tiposDeTablero, tiposDeTarea, usuario }: P
   }, [filtros.proyecto]);
 
   const catalogo = delProyecto && delProyecto.proyecto === filtros.proyecto ? delProyecto : null;
-  const poner = (campo: keyof Filtros, valor: string | boolean) => {
+  const alternar = (campo: Multiple, valor: string) => {
+    const actuales = filtros[campo];
+    poner(campo, actuales.includes(valor) ? actuales.filter((v) => v !== valor) : [...actuales, valor]);
+  };
+  const poner = (campo: keyof Filtros, valor: string | boolean | string[]) => {
     setPagina(1);
     setFiltros((actuales) => ({
       ...actuales, [campo]: valor,
-      ...(campo === 'proyecto' ? { responsable: '', sprint: '', version: '' } : {}),
+      ...(campo === 'proyecto' ? { responsables: [], sprints: [], version: '' } : {}),
     }));
   };
   const estados = tiposDeTablero.flatMap((t) => [...t.estados].sort((a, b) => a.orden - b.orden).map((e) => ({ ...e, tablero: t.nombre })));
@@ -141,11 +156,18 @@ export function Busqueda({ proyectos, tiposDeTablero, tiposDeTarea, usuario }: P
         </div>
         <div className="sh-grilla-filtros">
           {selector('proyecto', 'Proyecto', 'Todos', proyectos.map((p) => [p.uuid, p.nombre]))}
-          {selector('tablero', 'Tablero', 'Todos', tableros)}
-          {selector('tipo', 'Tipo', 'Todos', tiposDeTarea.map((t) => [t.codigo, t.nombre]))}
-          {selector('estado', 'Estado', 'Todos', estados.map((e) => [e.uuid, `${e.nombre} (${e.tablero})`]))}
-          {catalogo && !filtros.mias && selector('responsable', 'Responsable', 'Todos', catalogo.usuarios.map((u) => [u.uuid, u.nombre || u.nombreDeUsuario]))}
-          {catalogo && selector('sprint', 'Sprint', 'Todos', catalogo.sprints.map((s) => [s.uuid, s.nombre]))}
+          <FiltroMultiple etiqueta="Tablero" opciones={tableros} elegidos={filtros.tableros} alAlternar={(v) => alternar('tableros', v)} />
+          <FiltroMultiple etiqueta="Tipo" opciones={tiposDeTarea.map((t) => [t.codigo, t.nombre])} elegidos={filtros.tipos} alAlternar={(v) => alternar('tipos', v)} />
+          <FiltroMultiple etiqueta="Estado" opciones={estados.map((e) => [e.uuid, `${e.nombre} (${e.tablero})`])} elegidos={filtros.estados}
+            alAlternar={(v) => alternar('estados', v)} />
+          {catalogo && !filtros.mias && (
+            <FiltroMultiple etiqueta="Responsable" opciones={catalogo.usuarios.map((u) => [u.uuid, u.nombre || u.nombreDeUsuario])} elegidos={filtros.responsables}
+              alAlternar={(v) => alternar('responsables', v)} />
+          )}
+          {catalogo && (
+            <FiltroMultiple etiqueta="Sprint" opciones={[[SIN_SPRINT, 'Sin sprint (backlog)'], ...catalogo.sprints.map((s): [string, string] => [s.uuid, s.nombre])]}
+              elegidos={filtros.sprints} alAlternar={(v) => alternar('sprints', v)} />
+          )}
           {catalogo && selector('version', 'Versión', 'Todas', catalogo.versiones.map((v) => [v.uuid, v.nombre]))}
           <div className="ui-field">
             <label className="ui-label" htmlFor={`${id}-etiqueta`}>Etiqueta</label>
@@ -199,5 +221,22 @@ export function Busqueda({ proyectos, tiposDeTablero, tiposDeTarea, usuario }: P
         </section>
       )}
     </>
+  );
+}
+
+// Filtro de varios valores: las opciones como casillas en una lista corta con scroll (los elegidos se combinan con O)
+function FiltroMultiple({ etiqueta, opciones, elegidos, alAlternar }: {
+  etiqueta: string; opciones: [string, string][]; elegidos: string[]; alAlternar: (valor: string) => void;
+}) {
+  return (
+    <fieldset className="sh-fieldset sh-filtro-multiple">
+      <legend className="ui-label">{etiqueta}</legend>
+      <div className="sh-filtro-opciones">
+        {opciones.map(([valor, texto]) => (
+          <label key={valor} className="ui-check"><input type="checkbox" checked={elegidos.includes(valor)} onChange={() => alAlternar(valor)} />{texto}</label>
+        ))}
+      </div>
+      <span className="ui-help">{elegidos.length === 0 ? 'Todos' : `${elegidos.length} elegidos`}</span>
+    </fieldset>
   );
 }

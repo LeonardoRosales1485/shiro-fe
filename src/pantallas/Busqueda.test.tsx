@@ -25,10 +25,9 @@ const ultimo = (pedidos: Pedido[]) => pedidos.filter((p) => p.ruta === '/api/tar
   filtros: { campo: string; valor: string }[][]; parametros?: { nombre: string; valor: string }[]; pagina: number;
 };
 
-// Marca una opcion de un filtro de varios valores (si esperar, espera a que el filtro aparezca)
-function elegir(filtro: string, opcion: string, esperar = false) {
-  const grupo = screen.getAllByRole('group', { name: filtro })[0];
-  void esperar;
+// Marca una opcion de un filtro de varios valores
+function elegir(filtro: string, opcion: string) {
+  const grupo = screen.getByRole('group', { name: filtro });
   fireEvent.click(within(grupo).getByRole('checkbox', { name: opcion }));
 }
 
@@ -58,7 +57,8 @@ describe('Busqueda', () => {
     elegir('Tipo', 'Bug');
     elegir('Tipo', 'Historia');
     fireEvent.change(screen.getByLabelText('Etiqueta'), { target: { value: 'importador' } });
-    elegir('Sprint', 'Sprint 14', true);
+    await screen.findByRole('group', { name: 'Sprint' });
+    elegir('Sprint', 'Sprint 14');
     elegir('Sprint', 'Sin sprint (backlog)');
     fireEvent.change(screen.getByLabelText('Versión'), { target: { value: 'v10' } });
 
