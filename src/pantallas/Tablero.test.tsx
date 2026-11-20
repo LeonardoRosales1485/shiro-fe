@@ -44,6 +44,16 @@ describe('Tablero', () => {
     expect(screen.getAllByRole('button', { name: 'Nueva tarea' }).length).toBeGreaterThan(0);
   });
 
+  it('a un administrador el proyecto vacío le ofrece importar desde Jira', async () => {
+    simularApi({ 'POST /api/tarea/paginar': { cuerpo: pagina([]) } });
+    const alImportar = vi.fn();
+    render(<Tablero proyecto={PROYECTO} tablero={PROYECTO.tableros[0]} tipoDeTablero={TIPOS_DE_TABLERO[0]} version={0} alNuevaTarea={vi.fn()}
+      alImportar={alImportar} />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Importar desde Jira' }));
+    expect(alImportar).toHaveBeenCalled();
+  });
+
   it('avisa si no se pudieron cargar las tareas', async () => {
     simularApi({});
     mostrar();
