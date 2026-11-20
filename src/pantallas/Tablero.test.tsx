@@ -1,7 +1,7 @@
 // T6.1: el tablero muestra una columna por estado de su tipo, con sus tareas, y el estado vacío del proyecto nuevo.
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { pagina, PROYECTO, simularApi, tarea, TIPOS_DE_TABLERO } from '../pruebas/api';
+import { error, pagina, PROYECTO, simularApi, simularTelefono, tarea, TIPOS_DE_TABLERO } from '../pruebas/api';
 import { Tablero } from './Tablero';
 
 describe('Tablero', () => {
@@ -49,5 +49,38 @@ describe('Tablero', () => {
     mostrar();
 
     expect(await screen.findByRole('alert')).toHaveTextContent('No se pudieron cargar las tareas.');
+  });
+
+  it('si falla la carga permite reintentar', async () => {
+    let intentos = 0;
+    simularApi({ 'POST /api/tarea/paginar': () => {
+      intentos += 1;
+      return intentos === 1 ? error(503, 'NO_DISPONIBLE', 'El servidor no responde.') : { cuerpo: pagina([tarea('SHI-1', 'Login', 'e1')]) };
+    } });
+    mostrar();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudieron cargar las tareas. El servidor no responde.');
+    fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
+    expect(await screen.findByText('Login')).toBeInTheDocument();
+  });
+
+  it('en el teléfono muestra un estado por pestaña, con buscador', async () => {
+    simularTelefono();
+    simularApi({ 'POST /api/tarea/paginar': { cuerpo: pagina([
+      tarea('SHI-1', 'Login', 'e1'), tarea('SHI-2', 'Tablero', 'e2'), tarea('SHI-3', 'Base', 'e2'),
+    ]) } });
+    mostrar();
+
+    expect(await screen.findByRole('tab', { name: 'Por hacer 1' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText('Login')).toBeInTheDocument();
+    expect(screen.queryByText('Tablero')).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'En curso' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'En curso 2' }));
+    expect(screen.getByText('Tablero')).toBeInTheDocument();
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Buscar tarea o clave' }), { target: { value: 'shi-3' } });
+    expect(screen.queryByText('Tablero')).not.toBeInTheDocument();
+    expect(screen.getByText('Base')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Nueva tarea' })).toBeInTheDocument();
   });
 });

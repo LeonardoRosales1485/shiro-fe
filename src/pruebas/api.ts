@@ -146,3 +146,12 @@ export const TAREAS_DE_VERSION = [
   { uuid: 'u-SHI-098', clave: 'SHI-098', titulo: 'Token revocado', tipoCodigo: 'BUG', tipoNombre: 'Bug',
     tableroCodigo: 'QA', estadoNombre: 'Aprobado', terminada: true },
 ];
+
+// Simula una pantalla de telefono (max-width 760px) para las pruebas de la version movil (T6.6)
+export function simularTelefono() {
+  vi.stubGlobal('matchMedia', (consulta: string) => ({
+    matches: true, media: consulta, onchange: null,
+    addEventListener: () => undefined, removeEventListener: () => undefined, addListener: () => undefined, removeListener: () => undefined,
+    dispatchEvent: () => false,
+  }));
+}
