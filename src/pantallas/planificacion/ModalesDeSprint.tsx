@@ -5,6 +5,7 @@ import { useId, useState } from 'react';
 import { pedir } from '../../api/cliente';
 import type { ProyectoDTO, SprintDTO, TareaDePlanDTO } from '../../api/tipos';
 import { nombreDeTablero } from '../../componentes/catalogos';
+import { CampoDeTexto } from '../../componentes/CampoDeTexto';
 import { AlertaDeError, Modal } from '../../componentes/Modal';
 import { useEnvio } from '../../componentes/useEnvio';
 import { puntosDe } from './FilaDeTarea';
@@ -26,12 +27,6 @@ export function CrearSprintModal({ proyecto, backlog, alCrear, alCerrar }: Props
     alCrear(sprint.nombre);
   });
 
-  const campo = (clave: string, etiqueta: string, tipo: string, valor: string, poner: (v: string) => void) => (
-    <div className="ui-field">
-      <label className="ui-label" htmlFor={`${id}-${clave}`}>{etiqueta}</label>
-      <input id={`${id}-${clave}`} className="ui-input" type={tipo} value={valor} onChange={(e) => poner(e.target.value)} />
-    </div>
-  );
 
   const pie = <>
     <button className="ui-btn ghost" type="button" onClick={alCerrar}>Cancelar</button>
@@ -40,10 +35,10 @@ export function CrearSprintModal({ proyecto, backlog, alCrear, alCerrar }: Props
 
   return (
     <Modal titulo="Crear sprint" alCerrar={alCerrar} pie={pie} ancho={600}>
-      {campo('nombre', 'Nombre', 'text', nombre, setNombre)}
+      <CampoDeTexto id={`${id}-nombre`} etiqueta="Nombre" valor={nombre} alCambiar={setNombre} />
       <div className="sh-grilla-2">
-        {campo('inicio', 'Inicio', 'date', inicio, setInicio)}
-        {campo('fin', 'Fin', 'date', fin, setFin)}
+        <CampoDeTexto id={`${id}-inicio`} etiqueta="Inicio" tipo="date" valor={inicio} alCambiar={setInicio} />
+        <CampoDeTexto id={`${id}-fin`} etiqueta="Fin" tipo="date" valor={fin} alCambiar={setFin} />
       </div>
       <fieldset className="sh-fieldset">
         <legend className="ui-label">Tareas del backlog</legend>

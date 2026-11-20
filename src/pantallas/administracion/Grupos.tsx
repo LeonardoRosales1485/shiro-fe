@@ -22,7 +22,9 @@ export function Grupos({ usuarios, grupos, soySuperAdmin, ejecutar, avisar, alVe
   const [aSumar, setASumar] = useState('');
   const [modal, setModal] = useState<'nuevo' | 'archivar' | null>(null);
   const vigentes = usuarios.filter((u) => !u.archivado);
-  const miembros = (grupo: Grupo) => vigentes.filter((u) => u.grupos.some((g) => g.uuid === grupo.uuid));
+  // Personas del grupo; en Administradores tambien el super admin, que puede todo
+  const miembros = (grupo: Grupo) => vigentes.filter((u) => u.grupos.some((g) => g.uuid === grupo.uuid)
+    || (grupo.nombre === ADMINISTRADORES && tieneGrupo(u, SUPER_ADMIN)));
   const elegido = visibles.find((g) => g.uuid === elegidoUuid) ?? visibles[0] ?? null;
   const delSistema = elegido?.nombre === ADMINISTRADORES;
   const editable = elegido !== null && (!delSistema || soySuperAdmin);
@@ -94,9 +96,11 @@ export function Grupos({ usuarios, grupos, soySuperAdmin, ejecutar, avisar, alVe
                 <span className="ui-row" style={{ gap: 8 }}>
                   <span className="ui-avatar sm" aria-hidden="true">{iniciales(nombreDePersona(u))}</span>
                   <span>{nombreDePersona(u)}</span>
-                  <span className="ui-muted">{`desde ${fecha(u.grupos.find((g) => g.uuid === elegido.uuid)?.desde ?? null)}`}</span>
+                  {tieneGrupo(u, SUPER_ADMIN)
+                    ? <><span className="ui-chip is-info">Super admin</span><span className="ui-muted">Solo el super admin</span></>
+                    : <span className="ui-muted">{`desde ${fecha(u.grupos.find((g) => g.uuid === elegido.uuid)?.desde ?? null)}`}</span>}
                 </span>
-                {editable && (
+                {editable && !tieneGrupo(u, SUPER_ADMIN) && (
                   <button className="ui-btn ghost sm" type="button" aria-label={`Sacar a ${nombreDePersona(u)}`} onClick={() => sacar(elegido, u)}>Sacar</button>
                 )}
               </li>

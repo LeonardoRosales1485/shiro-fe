@@ -8,9 +8,10 @@ import { fecha } from '../componentes/catalogos';
 import { Encabezado } from '../componentes/Encabezado';
 import { AlertaDeError } from '../componentes/Modal';
 import { useAccion } from '../componentes/useAccion';
-import type { UsuarioAdministrado } from './administracion/comun';
+import { CuentaDeShiroModal } from './administracion/CuentaDeShiroModal';
+import type { Grupo, UsuarioAdministrado } from './administracion/comun';
 import {
-  CREAR, NOMBRES_DE_ESTADO, estadoPropuesto, tableroPropuesto, tipoPropuesto, type Catalogo, type ImportacionDTO,
+  CREAR, NOMBRES_DE_ESTADO, estadoPropuesto, tableroPropuesto, tipoPropuesto, type Catalogo, type ImportacionDTO, type UsuarioDeJira,
 } from './importacion/mapeo';
 import { PasoConexion } from './importacion/PasoConexion';
 import { PasoEstados, PasoTableros, claveDeEstado } from './importacion/PasosDeMapeo';
@@ -38,6 +39,8 @@ export function Importacion({ tiposDeTablero, tiposDeTarea, alIrAlTablero, inter
   const [usuarios, setUsuarios] = useState<UsuarioAdministrado[]>([]);
   const [anteriores, setAnteriores] = useState<ImportacionDTO[] | null>(null);
   const [importacion, setImportacion] = useState<ImportacionDTO | null>(null);
+  const [grupos, setGrupos] = useState<Grupo[]>([]);
+  const [paraCuenta, setParaCuenta] = useState<UsuarioDeJira | null>(null);
   const { ocupado, error, setError, ejecutar } = useAccion(() => undefined);
 
   useEffect(() => {
@@ -46,6 +49,8 @@ export function Importacion({ tiposDeTablero, tiposDeTarea, alIrAlTablero, inter
       .then((pagina) => vigente && setAnteriores(pagina.contenido))
       .catch((e) => vigente && setError(mensajeDeError(e)));
     pedir<UsuarioAdministrado[]>('GET', '/usuario/administracion').then((leidos) => vigente && setUsuarios(leidos)).catch(() => undefined);
+    pedir<Pagina<Grupo>>('POST', '/rol/paginar', { pagina: 1, tamano: 200, filtros: [], ordenes: [{ campo: 'nombre', direccion: 'asc' }] })
+      .then((pagina) => vigente && setGrupos(pagina.contenido)).catch(() => undefined);
     return () => {
       vigente = false;
     };
@@ -104,6 +109,22 @@ export function Importacion({ tiposDeTablero, tiposDeTarea, alIrAlTablero, inter
     setImportacion(await pedir<ImportacionDTO>('GET', `/importacion/uuid/${uuid}`));
     setPaso(4);
   }, null);
+  const cancelar = () => importacion && ejecutar(async () => {
+    setImportacion(await pedir<ImportacionDTO>('POST', `/importacion/${importacion.uuid}/cancelar`));
+  }, null);
+  // Despues de crear la cuenta de una persona de Jira, vuelve a leer el catalogo para vincularla por correo
+  const alCrearCuenta = () => {
+    setParaCuenta(null);
+    if (!catalogo) return;
+    ejecutar(async () => {
+      const [leido, leidos] = await Promise.all([
+        pedir<Catalogo>('GET', `/importacion/${catalogo.importacionUuid}/catalogo`),
+        pedir<UsuarioAdministrado[]>('GET', '/usuario/administracion'),
+      ]);
+      setCatalogo(leido);
+      setUsuarios(leidos);
+    }, null);
+  };
   const volverAImportar = () => importacion && ejecutar(async () => {
     setImportacion(await pedir<ImportacionDTO>('POST', `/importacion/${importacion.uuid}/ejecutar`));
   }, null);
@@ -154,12 +175,16 @@ export function Importacion({ tiposDeTablero, tiposDeTarea, alIrAlTablero, inter
       )}
       {paso === 3 && catalogo && (
         <>
-          <PasoUsuarios catalogo={catalogo} usuarios={usuarios} />
+          <PasoUsuarios catalogo={catalogo} usuarios={usuarios} alCrearCuenta={setParaCuenta} />
+          {paraCuenta && (
+            <CuentaDeShiroModal grupos={grupos} inicial={{ nombre: paraCuenta.nombre, correo: paraCuenta.correo ?? '' }}
+              alCerrar={() => setParaCuenta(null)} alCrear={alCrearCuenta} />
+          )}
           <Navegacion alAnterior={() => setPaso(2)} siguiente="Importar" deshabilitado={ocupado} alSiguiente={importar} />
         </>
       )}
       {paso === 4 && importacion && (
-        <ResumenDeImportacion importacion={importacion} ocupado={ocupado} alVolverAImportar={volverAImportar}
+        <ResumenDeImportacion importacion={importacion} ocupado={ocupado} alVolverAImportar={volverAImportar} alCancelar={cancelar}
           alIrAlTablero={() => alIrAlTablero(importacion.prefijo || prefijo)} />
       )}
     </>
@@ -192,7 +217,7 @@ function Anteriores({ anteriores, ocupado, alVer }: { anteriores: ImportacionDTO
                 <td>{i.nombreProyectoJira ?? i.claveProyectoJira ?? '—'}</td>
                 <td>{NOMBRES_DE_ESTADO[i.estado]}</td>
                 <td>{fecha(i.fechaDeActualizacion ?? i.fechaDeCreacion ?? null)}</td>
-                <td>{['EN_CURSO', 'TERMINADA', 'FALLIDA'].includes(i.estado) && (
+                <td>{['EN_CURSO', 'TERMINADA', 'FALLIDA', 'CANCELADA'].includes(i.estado) && (
                   <button className="ui-btn ghost sm" type="button" aria-label={`Ver resumen de ${i.prefijo}`} disabled={ocupado} onClick={() => alVer(i.uuid)}>Ver resumen</button>
                 )}</td>
               </tr>

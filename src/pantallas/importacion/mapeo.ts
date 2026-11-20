@@ -61,7 +61,7 @@ export type Resumen = {
   usuariosImportados: string[];
 };
 
-export type EstadoDeImportacion = 'CONECTADA' | 'MAPEADA' | 'EN_CURSO' | 'TERMINADA' | 'FALLIDA';
+export type EstadoDeImportacion = 'CONECTADA' | 'MAPEADA' | 'EN_CURSO' | 'TERMINADA' | 'FALLIDA' | 'CANCELADA';
 
 export type ImportacionDTO = {
   uuid: string;
@@ -70,10 +70,50 @@ export type ImportacionDTO = {
   nombreProyectoJira?: string | null;
   estado: EstadoDeImportacion;
   resumen?: string | null;
+  avance?: string | null;
+  cancelacionPedida?: boolean;
   fechaDeCreacion?: string | null;
   fechaDeActualizacion?: string | null;
 };
 
 export const NOMBRES_DE_ESTADO: Record<EstadoDeImportacion, string> = {
-  CONECTADA: 'Conectada', MAPEADA: 'Mapeada', EN_CURSO: 'En curso', TERMINADA: 'Terminada', FALLIDA: 'Fallida',
+  CONECTADA: 'Conectada', MAPEADA: 'Mapeada', EN_CURSO: 'En curso', TERMINADA: 'Terminada', FALLIDA: 'Fallida', CANCELADA: 'Cancelada',
 };
+
+// Avance de una ejecucion (ImportacionDTO.avance, JSON); los totales son null hasta que se conocen
+export type Avance = {
+  inicio: string;
+  versiones: number;
+  versionesTotales: number | null;
+  sprints: number;
+  sprintsTotales: number | null;
+  tareas: number;
+  tareasTotales: number | null;
+  tareasConComentariosLeidos: number;
+  comentarios: number;
+  comentariosTotales: number | null;
+};
+
+// Lee un JSON guardado en la importacion; null si no hay o no se puede leer
+export function leerJson<T>(texto: string | null | undefined): T | null {
+  try {
+    return texto ? JSON.parse(texto) as T : null;
+  } catch {
+    return null;
+  }
+}
+
+// Porcentaje hecho (0 a 100): versiones, sprints, tareas, la lectura de comentarios de cada tarea y los comentarios
+export function porcentaje(avance: Avance): number {
+  const totales = (avance.versionesTotales ?? 0) + (avance.sprintsTotales ?? 0) + 2 * (avance.tareasTotales ?? 0) + (avance.comentariosTotales ?? 0);
+  const hechos = avance.versiones + avance.sprints + avance.tareas + avance.tareasConComentariosLeidos + avance.comentarios;
+  return totales === 0 ? 0 : Math.min(99, Math.floor((hechos * 100) / totales));
+}
+
+// Minutos que faltan, estimados con lo que tardo hasta ahora; null si todavia no se puede estimar
+export function minutosRestantes(avance: Avance, ahora = Date.now()): number | null {
+  const hecho = porcentaje(avance);
+  if (hecho <= 0) return null;
+  const transcurrido = ahora - new Date(avance.inicio).getTime();
+  return Math.max(1, Math.round((transcurrido * (100 - hecho)) / hecho / 60000));
+}
