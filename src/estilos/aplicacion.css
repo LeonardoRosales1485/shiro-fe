@@ -107,9 +107,14 @@
   .ui-page-head .ui-crumbs{display:none}
   .sh-detalle-principal,.sh-detalles{flex-basis:100%}
   .sh-detalles{order:-1}
-  .sh-espacio.is-movil .ui-page-head{flex-wrap:nowrap;align-items:flex-start}
-  .sh-espacio.is-movil .ui-page-title{flex:1;min-width:0;font-size:22px}
-  .sh-espacio.is-movil .ui-page-head .ui-spacer{display:none}
+  .sh-espacio.is-movil .sh-cabeza-detalle{flex-wrap:nowrap;align-items:flex-start}
+  .sh-espacio.is-movil .ui-page-title{flex:1 1 100%;min-width:0;font-size:22px}
+  .sh-espacio.is-movil .sh-cabeza-detalle .ui-page-title{flex:1}
+  .sh-espacio.is-movil .sh-cabeza-detalle .ui-spacer{display:none}
+  .sh-espacio.is-movil .sh-principal{overflow-x:hidden}
+  .sh-espacio.is-movil .ui-card,.sh-espacio.is-movil .sh-tarjeta{min-width:0;max-width:100%}
+  .sh-fila-titulo{flex-basis:100%;order:-1}
+  .sh-fila-tarea .ui-spacer{display:none}
   .ui-modal{max-height:calc(100vh - 24px);overflow:auto}
   .ui-table-wrap{overflow-x:auto}
   .sh-filtros .ui-field{min-width:100%}
@@ -117,3 +122,4 @@
 .sh-hoja-veil{align-items:flex-end;padding:0}
 .sh-hoja{width:100%;display:grid;gap:8px;padding:16px;background:var(--surface);border-radius:var(--radius-md) var(--radius-md) 0 0}
 .sh-hoja .ui-btn{justify-content:center}
+.sh-barra-rapida{display:grid;grid-template-columns:1fr 1fr;gap:12px}

@@ -15,8 +15,9 @@ import { ListaDeBacklog } from './planificacion/ListaDeBacklog';
 import { CerrarSprintModal, CrearSprintModal } from './planificacion/ModalesDeSprint';
 import { SprintCerrado } from './planificacion/SprintCerrado';
 import { TarjetaDeSprint } from './planificacion/TarjetaDeSprint';
+import { useEsTelefono } from '../componentes/useEsTelefono';
 
-type Props = { proyecto: ProyectoDTO; tiposDeTablero: TipoTableroDTO[] };
+type Props = { proyecto: ProyectoDTO; tiposDeTablero: TipoTableroDTO[]; alNuevaTarea?: () => void };
 
 type Datos = { sprints: SprintDTO[]; tareas: Record<string, TareaDePlanDTO[]>; backlog: TareaDePlanDTO[] };
 
@@ -40,7 +41,8 @@ async function leer(proyecto: string): Promise<Datos> {
   return { sprints: sprints.contenido, tareas: Object.fromEntries(abiertos.map((s, i) => [s.uuid, listas[i]])), backlog };
 }
 
-export function Planificacion({ proyecto, tiposDeTablero }: Props) {
+export function Planificacion({ proyecto, tiposDeTablero, alNuevaTarea }: Props) {
+  const esTelefono = useEsTelefono();
   const [datos, setDatos] = useState<Datos | null>(null);
   const [errorDeCarga, setErrorDeCarga] = useState<string | null>(null);
   const [vuelta, setVuelta] = useState(0);
@@ -122,6 +124,12 @@ export function Planificacion({ proyecto, tiposDeTablero }: Props) {
             setAviso(`Se cerró ${modal.sprint.nombre}.`);
             setVuelta((v) => v + 1);
           }} />
+      )}
+      {esTelefono && <p className="ui-help" style={{ margin: 0 }}>En el teléfono el orden se cambia desde «⋯»: subir, bajar o mover a un sprint.</p>}
+      {esTelefono && alNuevaTarea && (
+        <div className="sh-accion-fija">
+          <button className="ui-btn solid" type="button" onClick={alNuevaTarea}><Icono nombre="mas" />Nueva tarea</button>
+        </div>
       )}
     </>
   );

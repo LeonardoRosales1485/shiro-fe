@@ -56,7 +56,7 @@ export function Actividad({ comentarios, historial, errorDelHistorial, comentand
           ))}
           <div className="ui-field">
             <label className="ui-label" htmlFor={`${id}-nuevo`}>Nuevo comentario</label>
-            <textarea id={`${id}-nuevo`} className="ui-textarea" rows={3} value={nuevo} onChange={(e) => setNuevo(e.target.value)} />
+            <textarea id={`${id}-nuevo`} className="ui-textarea sh-nuevo-comentario" rows={3} value={nuevo} onChange={(e) => setNuevo(e.target.value)} />
           </div>
           <div className="ui-row" style={{ justifyContent: 'flex-end' }}>
             <button className="ui-btn solid" type="button" disabled={!nuevo.trim() || comentando} onClick={comentar}>Comentar</button>

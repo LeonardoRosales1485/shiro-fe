@@ -164,6 +164,8 @@ export function Espacio({ usuario, esAdministrador, alSalir }: Props) {
     <MenuLateral proyectos={datos?.proyectos ?? []} proyecto={proyectoDelMenu} codigoDeTablero={elegida?.codigo ?? null} seccion={seccion ?? general}
       esAdministrador={esAdministrador} alCrearProyecto={() => setModal('proyecto')} alSalir={alSalir} movil={movil} />
   );
+  // Tablero donde se crea una tarea nueva: el abierto o, desde el backlog, el principal
+  const tableroParaCrear = tablero ?? proyecto?.tableros.find((t) => t.tipoTableroCodigo === 'PRINCIPAL') ?? null;
   const soloComputadora = esTelefono && general && SOLO_COMPUTADORA[general];
 
   return (
@@ -211,7 +213,8 @@ export function Espacio({ usuario, esAdministrador, alSalir }: Props) {
             setLectura((v) => v + 1);
           }} />
         )}
-        {proyecto && seccion === 'backlog' && datos && <Planificacion key={proyecto.uuid} proyecto={proyecto} tiposDeTablero={datos.tiposDeTablero} />}
+        {proyecto && seccion === 'backlog' && datos && <Planificacion key={proyecto.uuid} proyecto={proyecto} tiposDeTablero={datos.tiposDeTablero}
+          alNuevaTarea={() => setModal('tarea')} />}
         {proyecto && seccion === 'versiones' && datos && <Versiones key={proyecto.uuid} proyecto={proyecto} tiposDeTablero={datos.tiposDeTablero} />}
         {proyecto && clave && datos && (
           <DetalleDeTarea key={clave} proyecto={proyecto} clave={clave} tiposDeTablero={datos.tiposDeTablero} tiposDeTarea={datos.tiposDeTarea}
@@ -222,8 +225,8 @@ export function Espacio({ usuario, esAdministrador, alSalir }: Props) {
             alImportar={esAdministrador && !esTelefono ? () => navegar('/importar') : undefined} />
         )}
       </main>
-      {modal === 'tarea' && proyecto && tablero && datos && (
-        <CrearTareaModal proyecto={proyecto} tableroUuid={tablero.uuid} tipos={datos.tiposDeTarea}
+      {modal === 'tarea' && proyecto && tableroParaCrear && datos && (
+        <CrearTareaModal proyecto={proyecto} tableroUuid={tableroParaCrear.uuid} tipos={datos.tiposDeTarea}
           alCrear={() => setVersion((v) => v + 1)} alCerrar={() => setModal(null)} />
       )}
       {modal === 'proyecto' && <CrearProyectoModal alCrear={alCrearProyecto} alCerrar={() => setModal(null)} />}

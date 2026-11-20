@@ -235,7 +235,7 @@ export function DetalleDeTarea({ proyecto, clave, tiposDeTablero, tiposDeTarea, 
         </ol>
       </div>
       {!editando && (
-        <div className="ui-page-head">
+        <div className="ui-page-head sh-cabeza-detalle">
           <span className={`sh-type ${tipo.tono}`}><Icono nombre={tipo.icono} clase="" etiqueta={tarea.tipoNombre ?? tarea.tipoCodigo} /></span>
           <h1 className="ui-page-title">{tarea.titulo}</h1>
           <span className="ui-spacer" />
@@ -265,7 +265,7 @@ export function DetalleDeTarea({ proyecto, clave, tiposDeTablero, tiposDeTarea, 
       <div className="sh-detalle">
         <div className="sh-detalle-principal">
           {editando ? (
-            <EdicionDeTarea tarea={tarea} tiposDeTarea={tiposDeTarea} guardando={ocupado} error={error}
+            <EdicionDeTarea tarea={tarea} tiposDeTarea={tiposDeTarea} guardando={ocupado} error={error} reducida={esTelefono}
               conflicto={conflicto} alGuardar={(cambios) => guardar(cambios, null)}
               alCancelar={() => {
                 setEditando(false);
@@ -297,6 +297,16 @@ export function DetalleDeTarea({ proyecto, clave, tiposDeTablero, tiposDeTarea, 
           usuarioUuid={usuario.uuid} ocupado={ocupado} alMover={mover}
           alAsignarme={() => guardar({ responsableUuid: usuario.uuid }, `Te asignaste ${tarea.clave}.`)} />
       </div>
+      {esTelefono && !editando && (
+        <div className="sh-accion-fija sh-barra-rapida" role="toolbar" aria-label="Acciones rápidas">
+          <button className="ui-btn outline" type="button" onClick={() => {
+            const campo = document.querySelector<HTMLTextAreaElement>('.sh-nuevo-comentario');
+            campo?.scrollIntoView?.({ block: 'center' });
+            campo?.focus();
+          }}>Comentar</button>
+          <button className="ui-btn solid" type="button" onClick={() => setModal('clonar')}>Clonar</button>
+        </div>
+      )}
       {modal === 'clonar' && (
         <ClonarTareaModal proyecto={proyecto} tarea={tarea} tiposDeTablero={tiposDeTablero} tiposDeTarea={tiposDeTarea}
           alClonar={() => recargarRelaciones()} alCerrar={() => setModal(null)} />

@@ -32,6 +32,8 @@ type Props = {
   alGuardar: (cambios: Cambios) => void;
   alCancelar: () => void;
   alRecargar: () => void;
+  // En el telefono (resolucion 57): sin etiquetas, que con versiones y padre se editan desde la computadora
+  reducida?: boolean;
 };
 
 // Valores iniciales del formulario desde la tarea
@@ -48,7 +50,7 @@ function inicial(tarea: TareaDetalleDTO): Cambios {
   };
 }
 
-export function EdicionDeTarea({ tarea, tiposDeTarea, guardando, error, conflicto, alGuardar, alCancelar, alRecargar }: Props) {
+export function EdicionDeTarea({ tarea, tiposDeTarea, guardando, error, conflicto, alGuardar, alCancelar, alRecargar, reducida = false }: Props) {
   const [cambios, setCambios] = useState<Cambios>(() => inicial(tarea));
   const [usuarios, setUsuarios] = useState<UsuarioDelProyectoDTO[]>([]);
   const [vistaPrevia, setVistaPrevia] = useState(false);
@@ -118,7 +120,7 @@ export function EdicionDeTarea({ tarea, tiposDeTarea, guardando, error, conflict
           </select>
         </div>
         {campo('puntos', 'Estimación (puntos)', 'number')}
-        {campo('etiquetas', 'Etiquetas (separadas por coma)')}
+        {!reducida && campo('etiquetas', 'Etiquetas (separadas por coma)')}
         {campo('vencimiento', 'Vence', 'date')}
         {opciones.length > 0 && (
           <div className="ui-field">
@@ -130,6 +132,7 @@ export function EdicionDeTarea({ tarea, tiposDeTarea, guardando, error, conflict
           </div>
         )}
       </div>
+      {reducida && <p className="ui-help" style={{ margin: 0 }}>Etiquetas, versiones y tarea padre se editan desde la computadora.</p>}
       <AlertaDeError mensaje={error} />
       <div className="ui-row" style={{ justifyContent: 'flex-end' }}>
         {conflicto && <button className="ui-btn ghost" type="button" onClick={alRecargar}>Recargar</button>}
