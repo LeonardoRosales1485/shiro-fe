@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ErrorDeApi, mensajeDeError, pedir } from '../api/cliente';
 import type { ProyectoDTO } from '../api/tipos';
 import { AlertaDeError, Modal } from './Modal';
+import { BotonDeAccion } from './BotonDeAccion';
 
 type Props = { alCrear: (proyecto: ProyectoDTO) => void; alCerrar: () => void };
 
@@ -31,7 +32,7 @@ export function CrearProyectoModal({ alCrear, alCerrar }: Props) {
 
   const pie = <>
     <button className="ui-btn ghost" type="button" onClick={alCerrar}>Cancelar</button>
-    <button className="ui-btn solid" type="button" disabled={!valido || enviando} onClick={crear}>Crear proyecto</button>
+    <BotonDeAccion clase="ui-btn solid" texto="Crear proyecto" enviando={enviando} deshabilitado={!valido} alHacerClic={crear} />
   </>;
 
   return (

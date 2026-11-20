@@ -11,6 +11,7 @@ import { Encabezado } from '../componentes/Encabezado';
 import { Markdown } from '../componentes/Markdown';
 import { AlertaDeError, Modal } from '../componentes/Modal';
 import { useEnvio } from '../componentes/useEnvio';
+import { BotonDeAccion } from '../componentes/BotonDeAccion';
 
 type Props = { esAdministrador: boolean };
 
@@ -153,7 +154,7 @@ function VistaPreviaModal({ elemento, paraRestaurar, ruta, alRestaurar, alCerrar
   });
   const pie = <>
     <button className="ui-btn ghost" type="button" onClick={alCerrar}>{paraRestaurar ? 'Cancelar' : 'Cerrar'}</button>
-    <button className="ui-btn solid" type="button" disabled={enviando || vista?.padreArchivado === true} onClick={restaurar}>Restaurar</button>
+    <BotonDeAccion clase="ui-btn solid" texto="Restaurar" enviando={enviando} deshabilitado={vista?.padreArchivado === true} alHacerClic={restaurar} />
   </>;
   return (
     <Modal titulo={paraRestaurar ? 'Restaurar archivado' : elemento.nombre} alCerrar={alCerrar} pie={pie} ancho={560}>

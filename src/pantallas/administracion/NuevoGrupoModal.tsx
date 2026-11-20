@@ -5,6 +5,7 @@ import { pedir } from '../../api/cliente';
 import { AlertaDeError, Modal } from '../../componentes/Modal';
 import { useEnvio } from '../../componentes/useEnvio';
 import { asignarGrupos, nombreDePersona, uuidsDeGrupos, type Grupo, type UsuarioAdministrado } from './comun';
+import { BotonDeAccion } from '../../componentes/BotonDeAccion';
 
 type Props = { usuarios: UsuarioAdministrado[]; alCrear: (nombre: string) => void; alCerrar: () => void };
 
@@ -20,7 +21,7 @@ export function NuevoGrupoModal({ usuarios, alCrear, alCerrar }: Props) {
   });
   const pie = <>
     <button className="ui-btn ghost" type="button" onClick={alCerrar}>Cancelar</button>
-    <button className="ui-btn solid" type="button" disabled={!nombre.trim() || enviando} onClick={crear}>Crear grupo</button>
+    <BotonDeAccion clase="ui-btn solid" texto="Crear grupo" enviando={enviando} deshabilitado={!nombre.trim()} alHacerClic={crear} />
   </>;
   return (
     <Modal titulo="Nuevo grupo" alCerrar={alCerrar} pie={pie} ancho={480}>

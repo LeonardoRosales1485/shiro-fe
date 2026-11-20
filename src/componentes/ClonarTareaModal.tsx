@@ -11,6 +11,7 @@ import {
 import { TIPOS } from './catalogos';
 import { Icono } from './Icono';
 import { AlertaDeError, Modal } from './Modal';
+import { BotonDeAccion } from './BotonDeAccion';
 
 type Props = {
   proyecto: ProyectoDTO;
@@ -91,8 +92,8 @@ export function ClonarTareaModal({ proyecto, tarea, tiposDeTablero, tiposDeTarea
     ? <button className="ui-btn solid" type="button" onClick={alCerrar}>Listo</button>
     : <>
       <button className="ui-btn ghost" type="button" onClick={alCerrar}>Cancelar</button>
-      <button className="ui-btn solid" type="button" disabled={!tableroUuid || enviando || (esSubtarea && comoSubtarea && !clavePadre.trim())}
-        onClick={clonar}>Clonar</button>
+      <BotonDeAccion clase="ui-btn solid" texto="Clonar" enviando={enviando} deshabilitado={!tableroUuid || (esSubtarea && comoSubtarea && !clavePadre.trim())}
+        alHacerClic={clonar} />
     </>;
 
   return (

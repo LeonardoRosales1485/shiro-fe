@@ -9,6 +9,7 @@ import { CampoDeTexto } from '../../componentes/CampoDeTexto';
 import { AlertaDeError, Modal } from '../../componentes/Modal';
 import { useEnvio } from '../../componentes/useEnvio';
 import { puntosDe } from './FilaDeTarea';
+import { BotonDeAccion } from '../../componentes/BotonDeAccion';
 
 type PropsCrear = { proyecto: ProyectoDTO; backlog: TareaDePlanDTO[]; alCrear: (nombre: string) => void; alCerrar: () => void };
 
@@ -30,7 +31,7 @@ export function CrearSprintModal({ proyecto, backlog, alCrear, alCerrar }: Props
 
   const pie = <>
     <button className="ui-btn ghost" type="button" onClick={alCerrar}>Cancelar</button>
-    <button className="ui-btn solid" type="button" disabled={!nombre.trim() || !inicio || !fin || enviando} onClick={crear}>Crear sprint</button>
+    <BotonDeAccion clase="ui-btn solid" texto="Crear sprint" enviando={enviando} deshabilitado={!nombre.trim() || !inicio || !fin} alHacerClic={crear} />
   </>;
 
   return (
@@ -81,7 +82,7 @@ export function CerrarSprintModal({ sprint, tareas, terminados, planificados, al
 
   const pie = <>
     <button className="ui-btn ghost" type="button" onClick={alCerrar}>Cancelar</button>
-    <button className="ui-btn solid" type="button" disabled={enviando} onClick={cerrar}>Cerrar sprint</button>
+    <BotonDeAccion clase="ui-btn solid" texto="Cerrar sprint" enviando={enviando} alHacerClic={cerrar} />
   </>;
 
   return (

@@ -9,6 +9,7 @@ import { AlertaDeError, Modal } from '../../componentes/Modal';
 import { useAccion } from '../../componentes/useAccion';
 import { useEnvio } from '../../componentes/useEnvio';
 import { useLectura } from '../../componentes/useLectura';
+import { BotonDeAccion } from '../../componentes/BotonDeAccion';
 
 type Props = { alCambiar: () => void };
 
@@ -116,7 +117,7 @@ function EditarProyectoModal({ proyecto, alGuardar, alCerrar }: { proyecto: Proy
   });
   const pie = <>
     <button className="ui-btn ghost" type="button" onClick={alCerrar}>Cancelar</button>
-    <button className="ui-btn solid" type="button" disabled={!nombre.trim() || enviando} onClick={guardar}>Guardar</button>
+    <BotonDeAccion clase="ui-btn solid" texto="Guardar" enviando={enviando} deshabilitado={!nombre.trim()} alHacerClic={guardar} />
   </>;
   return (
     <Modal titulo="Editar proyecto" alCerrar={alCerrar} pie={pie} ancho={440}>

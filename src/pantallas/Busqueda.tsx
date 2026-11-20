@@ -11,6 +11,7 @@ import {
 import { nombreDeTablero } from '../componentes/catalogos';
 import { Encabezado } from '../componentes/Encabezado';
 import { AlertaDeError } from '../componentes/Modal';
+import { useEsTelefono } from '../componentes/useEsTelefono';
 import { EnlaceATarea } from './detalle/PanelDeDetalles';
 
 type Props = { proyectos: ProyectoDTO[]; tiposDeTablero: TipoTableroDTO[]; tiposDeTarea: TipoTareaDTO[]; usuario: UsuarioDTO };
@@ -56,6 +57,12 @@ function grupo(campo: string, valores: string[]): Filtro[] {
   return valores.map((valor) => igual(campo, valor));
 }
 
+// Cantidad de filtros elegidos (sin el texto), para el boton «Filtros» del telefono
+function cantidadDeFiltros(f: Filtros): number {
+  const listas = [f.tableros, f.tipos, f.estados, f.responsables, f.sprints].filter((l) => l.length > 0).length;
+  return listas + [f.proyecto, f.version, f.etiqueta.trim()].filter(Boolean).length + (f.mias ? 1 : 0);
+}
+
 // Pedido de /tarea/paginar con los filtros (un grupo por filtro: los grupos se combinan con Y) y los parametros
 function pedidoDeBusqueda(f: Filtros, usuario: string, pagina: number) {
   const grupos: Filtro[][] = [];
@@ -80,6 +87,8 @@ function pedidoDeBusqueda(f: Filtros, usuario: string, pagina: number) {
 export function Busqueda({ proyectos, tiposDeTablero, tiposDeTarea, usuario }: Props) {
   const id = useId();
   const [filtros, setFiltros] = useState<Filtros>(VACIOS);
+  const esTelefono = useEsTelefono();
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
   const [pagina, setPagina] = useState(1);
   const [resultado, setResultado] = useState<{ tareas: Resultado[]; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -154,6 +163,12 @@ export function Busqueda({ proyectos, tiposDeTablero, tiposDeTarea, usuario }: P
           <input id={`${id}-texto`} className="ui-input" type="search" placeholder="Clave, palabras del título o de la descripción" value={filtros.texto}
             onChange={(e) => poner('texto', e.target.value)} />
         </div>
+        {esTelefono && (
+          <button className="ui-btn sm" type="button" aria-expanded={filtrosAbiertos} onClick={() => setFiltrosAbiertos(!filtrosAbiertos)}>
+            {`Filtros ${cantidadDeFiltros(filtros)}`}
+          </button>
+        )}
+        {(!esTelefono || filtrosAbiertos) && <>
         <div className="sh-grilla-filtros">
           {selector('proyecto', 'Proyecto', 'Todos', proyectos.map((p) => [p.uuid, p.nombre]))}
           <FiltroMultiple etiqueta="Tablero" opciones={tableros} elegidos={filtros.tableros} alAlternar={(v) => alternar('tableros', v)} />
@@ -182,6 +197,7 @@ export function Busqueda({ proyectos, tiposDeTablero, tiposDeTarea, usuario }: P
             setFiltros(VACIOS);
           }}>Limpiar filtros</button>
         </div>
+        </>}
       </section>
       <AlertaDeError mensaje={error} />
       {!resultado && !error && <div className="ui-skel sh-task-skel" aria-hidden="true" />}

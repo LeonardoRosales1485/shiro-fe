@@ -5,6 +5,7 @@
 import { Fragment, useId, useState } from 'react';
 import { pedir } from '../../api/cliente';
 import { iniciales } from '../../componentes/catalogos';
+import { BotonDeAccion } from '../../componentes/BotonDeAccion';
 import { ConfirmarModal } from '../../componentes/ConfirmarModal';
 import { AlertaDeError, Modal } from '../../componentes/Modal';
 import { useEnvio } from '../../componentes/useEnvio';
@@ -111,7 +112,7 @@ function GruposDeUsuarioModal({ usuario, grupos, soySuperAdmin, alGuardar, alCer
   const alternar = (uuid: string) => setElegidos((antes) => antes.includes(uuid) ? antes.filter((g) => g !== uuid) : [...antes, uuid]);
   const pie = <>
     <button className="ui-btn ghost" type="button" onClick={alCerrar}>Cancelar</button>
-    <button className="ui-btn solid" type="button" disabled={enviando} onClick={() => enviar(() => alGuardar(elegidos))}>Guardar</button>
+    <BotonDeAccion clase="ui-btn solid" texto="Guardar" enviando={enviando} alHacerClic={() => enviar(() => alGuardar(elegidos))} />
   </>;
   return (
     <Modal titulo={`Grupos de ${nombreDePersona(usuario)}`} alCerrar={alCerrar} pie={pie} ancho={440}>

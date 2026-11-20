@@ -7,6 +7,7 @@ import { AlertaDeError, Modal } from '../../componentes/Modal';
 import { useEnvio } from '../../componentes/useEnvio';
 import { nombreDeGrupo, nombreDePersona, type Grupo, type UsuarioAdministrado } from './comun';
 import { NIVELES, NOMBRES_DE_NIVEL, VERBOS_DE_NIVEL, esDelAlcance, puede, type Alcance, type Efecto, type Nivel, type ReglaDTO } from './reglas';
+import { BotonDeAccion } from '../../componentes/BotonDeAccion';
 
 // Recurso de una regla nueva: el proyecto o un tablero
 function recurso(proyecto: ProyectoDTO, alcance: Alcance) {
@@ -44,7 +45,7 @@ export function CambiarPermisosModal({ grupo, proyecto, alcances, reglas, alGuar
   });
   const pie = <>
     <button className="ui-btn ghost" type="button" onClick={alCerrar}>Cancelar</button>
-    <button className="ui-btn solid" type="button" disabled={enviando} onClick={guardar}>Guardar permisos</button>
+    <BotonDeAccion clase="ui-btn solid" texto="Guardar permisos" enviando={enviando} alHacerClic={guardar} />
   </>;
   return (
     <Modal titulo="Cambiar permisos de un grupo" alCerrar={alCerrar} pie={pie} ancho={640}>
@@ -101,7 +102,7 @@ export function ExcepcionModal({ proyecto, alcances, reglas, usuarios, alGuardar
   });
   const pie = <>
     <button className="ui-btn ghost" type="button" onClick={alCerrar}>Cancelar</button>
-    <button className="ui-btn solid" type="button" disabled={!usuario || enviando} onClick={guardar}>Guardar excepción</button>
+    <BotonDeAccion clase="ui-btn solid" texto="Guardar excepción" enviando={enviando} deshabilitado={!usuario} alHacerClic={guardar} />
   </>;
   return (
     <Modal titulo="Excepción por usuario" alCerrar={alCerrar} pie={pie} ancho={520}>

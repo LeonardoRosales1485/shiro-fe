@@ -8,6 +8,7 @@ import { CampoDeTexto } from '../../componentes/CampoDeTexto';
 import { AlertaDeError, Modal } from '../../componentes/Modal';
 import { useEnvio } from '../../componentes/useEnvio';
 import { ADMINISTRADORES, SUPER_ADMIN, type Grupo } from './comun';
+import { BotonDeAccion } from '../../componentes/BotonDeAccion';
 
 type Props = {
   grupos: Grupo[];
@@ -63,7 +64,7 @@ export function CuentaDeShiroModal({ grupos, inicial, alCrear, alCerrar }: Props
 
   const pie = <>
     <button className="ui-btn ghost" type="button" onClick={alCerrar}>Cancelar</button>
-    <button className="ui-btn solid" type="button" disabled={!nombre.trim() || !usuario.trim() || !correo.trim() || enviando} onClick={crear}>Crear cuenta</button>
+    <BotonDeAccion clase="ui-btn solid" texto="Crear cuenta" enviando={enviando} deshabilitado={!nombre.trim() || !usuario.trim() || !correo.trim()} alHacerClic={crear} />
   </>;
   return (
     <Modal titulo="Crear cuenta de Shiro" alCerrar={alCerrar} pie={pie} ancho={520}>

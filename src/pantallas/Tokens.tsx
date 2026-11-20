@@ -9,6 +9,7 @@ import { Icono } from '../componentes/Icono';
 import { AlertaDeError, Modal } from '../componentes/Modal';
 import { useAccion } from '../componentes/useAccion';
 import { useEnvio } from '../componentes/useEnvio';
+import { BotonDeAccion } from '../componentes/BotonDeAccion';
 
 type Props = { nombreDelUsuario: string };
 
@@ -124,7 +125,7 @@ function GenerarTokenModal({ alGenerar, alCerrar }: { alGenerar: (token: TokenCr
   const generar = () => enviar(async () => alGenerar(await pedir<TokenCreado>('POST', '/usuario/crear-token', { nombre: nombre.trim() })));
   const pie = <>
     <button className="ui-btn ghost" type="button" onClick={alCerrar}>Cancelar</button>
-    <button className="ui-btn solid" type="button" disabled={!nombre.trim() || enviando} onClick={generar}>Generar token</button>
+    <BotonDeAccion clase="ui-btn solid" texto="Generar token" enviando={enviando} deshabilitado={!nombre.trim()} alHacerClic={generar} />
   </>;
   return (
     <Modal titulo="Generar token MCP" alCerrar={alCerrar} pie={pie} ancho={480}>
@@ -148,7 +149,7 @@ function RevocarTokenModal({ token, alRevocar, alCerrar }: { token: Token; alRev
   });
   const pie = <>
     <button className="ui-btn ghost" type="button" onClick={alCerrar}>Cancelar</button>
-    <button className="ui-btn solid is-danger" type="button" disabled={enviando} onClick={revocar}>Revocar</button>
+    <BotonDeAccion clase="ui-btn solid is-danger" texto="Revocar" enviando={enviando} alHacerClic={revocar} />
   </>;
   return (
     <Modal titulo="Revocar token" alCerrar={alCerrar} pie={pie} ancho={440}>

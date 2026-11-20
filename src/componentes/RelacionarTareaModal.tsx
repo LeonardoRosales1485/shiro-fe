@@ -5,6 +5,7 @@ import { useEffect, useId, useState } from 'react';
 import { mensajeDeError, pedir } from '../api/cliente';
 import { igual, pedidoDePaginado, type Pagina, type TareaDetalleDTO, type TareaDTO } from '../api/tipos';
 import { AlertaDeError, Modal } from './Modal';
+import { BotonDeAccion } from './BotonDeAccion';
 
 type Props = { tarea: TareaDetalleDTO; alRelacionar: () => void; alCerrar: () => void };
 
@@ -68,7 +69,7 @@ export function RelacionarTareaModal({ tarea, alRelacionar, alCerrar }: Props) {
 
   const pie = <>
     <button className="ui-btn ghost" type="button" onClick={alCerrar}>Cancelar</button>
-    <button className="ui-btn solid" type="button" disabled={!otra || enviando} onClick={relacionar}>Relacionar</button>
+    <BotonDeAccion clase="ui-btn solid" texto="Relacionar" enviando={enviando} deshabilitado={!otra} alHacerClic={relacionar} />
   </>;
 
   return (

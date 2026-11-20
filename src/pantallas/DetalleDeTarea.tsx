@@ -10,6 +10,7 @@ import {
 import { ClonarTareaModal } from '../componentes/ClonarTareaModal';
 import { tituloDeTablero, TIPOS } from '../componentes/catalogos';
 import { Icono } from '../componentes/Icono';
+import { useEsTelefono } from '../componentes/useEsTelefono';
 import { Markdown } from '../componentes/Markdown';
 import { rutaDeTablero } from '../componentes/MenuLateral';
 import { AlertaDeError, Modal } from '../componentes/Modal';
@@ -19,6 +20,7 @@ import { Actividad } from './detalle/Actividad';
 import { EdicionDeTarea, type Cambios } from './detalle/EdicionDeTarea';
 import { PanelDeDetalles } from './detalle/PanelDeDetalles';
 import { Relaciones, Subtareas } from './detalle/Vinculos';
+import { BotonDeAccion } from '../componentes/BotonDeAccion';
 
 type Props = {
   proyecto: ProyectoDTO;
@@ -97,6 +99,13 @@ export function DetalleDeTarea({ proyecto, clave, tiposDeTablero, tiposDeTarea, 
   const [historial, setHistorial] = useState<HistorialDTO[] | null>(null);
   const [errorDelHistorial, setErrorDelHistorial] = useState<string | null>(null);
   const [modal, setModal] = useState<Modal>(null);
+  const esTelefono = useEsTelefono();
+  const [acciones, setAcciones] = useState(false);
+  // Accion elegida en la hoja de acciones del telefono: cierra la hoja y abre lo pedido
+  const elegirAccion = (accion: () => void) => () => {
+    setAcciones(false);
+    accion();
+  };
 
   useEffect(() => {
     let vigente = true;
@@ -230,9 +239,25 @@ export function DetalleDeTarea({ proyecto, clave, tiposDeTablero, tiposDeTarea, 
           <span className={`sh-type ${tipo.tono}`}><Icono nombre={tipo.icono} clase="" etiqueta={tarea.tipoNombre ?? tarea.tipoCodigo} /></span>
           <h1 className="ui-page-title">{tarea.titulo}</h1>
           <span className="ui-spacer" />
-          <button className="ui-btn" type="button" onClick={() => setEditando(true)}><Icono nombre="lapiz" />Editar</button>
-          <button className="ui-btn" type="button" onClick={() => setModal('clonar')}>Clonar</button>
-          <button className="ui-btn outline is-danger" type="button" onClick={() => setModal('archivar')}><Icono nombre="archivo" />Archivar</button>
+          {esTelefono
+            ? <button className="ui-btn ghost icon" type="button" aria-label="Acciones de la tarea" onClick={() => setAcciones(true)}>⋯</button>
+            : <>
+              <button className="ui-btn" type="button" onClick={() => setEditando(true)}><Icono nombre="lapiz" />Editar</button>
+              <button className="ui-btn" type="button" onClick={() => setModal('clonar')}>Clonar</button>
+              <button className="ui-btn outline is-danger" type="button" onClick={() => setModal('archivar')}><Icono nombre="archivo" />Archivar</button>
+            </>}
+        </div>
+      )}
+      {acciones && (
+        <div className="ui-veil sh-hoja-veil" onClick={(e) => e.target === e.currentTarget && setAcciones(false)}>
+          <div className="sh-hoja" role="dialog" aria-modal="true" aria-label="Acciones de tarea">
+            <p className="ui-muted" style={{ margin: 0 }}>{`${tarea.clave} ${tarea.titulo}`}</p>
+            <button className="ui-btn" type="button" onClick={elegirAccion(() => setEditando(true))}>Editar</button>
+            <button className="ui-btn" type="button" onClick={elegirAccion(() => setModal('clonar'))}>Clonar a otro tablero</button>
+            <button className="ui-btn" type="button" onClick={elegirAccion(() => setModal('relacionar'))}>Relacionar con otra tarea</button>
+            <button className="ui-btn outline is-danger" type="button" onClick={elegirAccion(() => setModal('archivar'))}>Archivar</button>
+            <button className="ui-btn ghost" type="button" onClick={() => setAcciones(false)}>Cancelar</button>
+          </div>
         </div>
       )}
       {aviso && <div className="ui-alert is-success" role="status"><span>{aviso}</span></div>}
@@ -313,7 +338,7 @@ function ArchivarTareaModal({ tarea, relaciones, alArchivar, alCerrar }: {
 
   const pie = <>
     <button className="ui-btn ghost" type="button" onClick={alCerrar}>Cancelar</button>
-    <button className="ui-btn solid is-danger" type="button" disabled={enviando} onClick={archivar}>Archivar</button>
+    <BotonDeAccion clase="ui-btn solid is-danger" texto="Archivar" enviando={enviando} alHacerClic={archivar} />
   </>;
 
   return (

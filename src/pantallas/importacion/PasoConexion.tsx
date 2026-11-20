@@ -9,6 +9,7 @@ import { CampoDeTexto } from '../../componentes/CampoDeTexto';
 import { AlertaDeError } from '../../componentes/Modal';
 import { useEnvio } from '../../componentes/useEnvio';
 import type { Catalogo } from './mapeo';
+import { BotonDeAccion } from '../../componentes/BotonDeAccion';
 
 type Props = { alConectar: (catalogo: Catalogo, prefijo: string) => void };
 
@@ -53,7 +54,7 @@ export function PasoConexion({ alConectar }: Props) {
       <CampoDeTexto id={`${id}-t`} etiqueta="Token de la API" tipo="password" valor={token} alCambiar={cambiarCredencial(setToken)}
         ayuda="Se guarda cifrado al conectar y se usa solo para importar este proyecto. No se vuelve a mostrar." />
       <div className="ui-row">
-        <button className="ui-btn" type="button" disabled={!url.trim() || !correo.trim() || !token || enviando} onClick={probar}>Probar conexión</button>
+        <BotonDeAccion clase="ui-btn" texto="Probar conexión" enviando={enviando} deshabilitado={!url.trim() || !correo.trim() || !token} alHacerClic={probar} />
         {proyectos && <span className="ui-chip is-success" role="status">{`Conectado: ${proyectos.length} ${proyectos.length === 1 ? 'proyecto visible' : 'proyectos visibles'}.`}</span>}
       </div>
       {proyectos && (
@@ -75,7 +76,7 @@ export function PasoConexion({ alConectar }: Props) {
       <AlertaDeError mensaje={error} />
       {proyectos && (
         <div className="ui-row" style={{ justifyContent: 'flex-end' }}>
-          <button className="ui-btn solid" type="button" disabled={!clave || !prefijo.trim() || enviando} onClick={conectar}>Conectar</button>
+          <BotonDeAccion clase="ui-btn solid" texto="Conectar" enviando={enviando} deshabilitado={!clave || !prefijo.trim()} alHacerClic={conectar} />
         </div>
       )}
     </section>

@@ -110,3 +110,6 @@
   .ui-table-wrap{overflow-x:auto}
   .sh-filtros .ui-field{min-width:100%}
 }
+.sh-hoja-veil{align-items:flex-end;padding:0}
+.sh-hoja{width:100%;display:grid;gap:8px;padding:16px;background:var(--surface);border-radius:var(--radius-md) var(--radius-md) 0 0}
+.sh-hoja .ui-btn{justify-content:center}

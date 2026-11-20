@@ -9,6 +9,7 @@ import type { Prioridad, TareaDetalleDTO, TipoTareaDTO, UsuarioDelProyectoDTO } 
 import { ORDEN_DE_PRIORIDADES, PRIORIDADES } from '../../componentes/catalogos';
 import { Markdown } from '../../componentes/Markdown';
 import { AlertaDeError } from '../../componentes/Modal';
+import { BotonDeAccion } from '../../componentes/BotonDeAccion';
 
 // Lo que se edita en el formulario
 export type Cambios = {
@@ -133,7 +134,7 @@ export function EdicionDeTarea({ tarea, tiposDeTarea, guardando, error, conflict
       <div className="ui-row" style={{ justifyContent: 'flex-end' }}>
         {conflicto && <button className="ui-btn ghost" type="button" onClick={alRecargar}>Recargar</button>}
         <button className="ui-btn ghost" type="button" onClick={alCancelar}>Cancelar</button>
-        <button className="ui-btn solid" type="submit" disabled={!cambios.titulo.trim() || guardando}>Guardar cambios</button>
+        <BotonDeAccion clase="ui-btn solid" tipo="submit" texto="Guardar cambios" enviando={guardando} deshabilitado={!cambios.titulo.trim()} />
       </div>
     </form>
   );
