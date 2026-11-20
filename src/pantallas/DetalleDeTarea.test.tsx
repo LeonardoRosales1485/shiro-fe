@@ -269,4 +269,22 @@ describe('DetalleDeTarea', () => {
     expect(screen.queryByRole('dialog', { name: 'Acciones de tarea' })).not.toBeInTheDocument();
     expect(screen.getByRole('dialog', { name: 'Archivar tarea' })).toBeInTheDocument();
   });
+
+  it('en el teléfono tiene la barra de «Comentar» y «Clonar», y la edición deja etiquetas para la computadora', async () => {
+    simularTelefono();
+    api();
+    mostrar();
+
+    const barra = await screen.findByRole('toolbar', { name: 'Acciones rápidas' });
+    fireEvent.click(within(barra).getByRole('button', { name: 'Comentar' }));
+    expect(screen.getByLabelText('Nuevo comentario')).toHaveFocus();
+    fireEvent.click(within(barra).getByRole('button', { name: 'Clonar' }));
+    expect(screen.getByRole('dialog', { name: 'Clonar tarea' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Acciones de la tarea' }));
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Acciones de tarea' })).getByRole('button', { name: 'Editar' }));
+    expect(screen.queryByLabelText('Etiquetas (separadas por coma)')).not.toBeInTheDocument();
+    expect(screen.getByText('Etiquetas, versiones y tarea padre se editan desde la computadora.')).toBeInTheDocument();
+  });
 });

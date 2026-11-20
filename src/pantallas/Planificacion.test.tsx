@@ -1,7 +1,7 @@
 // T6.3: backlog y sprints del proyecto (prototipos "Backlog", "Crear sprint", "Cerrar sprint" y "Sprint cerrado").
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { pagina, PROYECTO, simularApi, SPRINTS, tareaDePlan, TIPOS_DE_TABLERO, type Respuesta } from '../pruebas/api';
+import { pagina, PROYECTO, simularApi, simularTelefono, SPRINTS, tareaDePlan, TIPOS_DE_TABLERO, type Respuesta } from '../pruebas/api';
 import { Planificacion } from './Planificacion';
 
 // Tareas de cada sprint por su uuid (el filtro sprint.uuid del paginado)
@@ -177,5 +177,16 @@ describe('Planificacion', () => {
     mostrar();
 
     expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo cargar la planificación.');
+  });
+
+  it('en el teléfono explica cómo ordenar y tiene «Nueva tarea» fijo', async () => {
+    simularTelefono();
+    api();
+    const alNuevaTarea = vi.fn();
+    render(<Planificacion proyecto={PROYECTO} tiposDeTablero={TIPOS_DE_TABLERO} alNuevaTarea={alNuevaTarea} />);
+
+    expect(await screen.findByText('En el teléfono el orden se cambia desde «⋯»: subir, bajar o mover a un sprint.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Nueva tarea' }));
+    expect(alNuevaTarea).toHaveBeenCalled();
   });
 });
