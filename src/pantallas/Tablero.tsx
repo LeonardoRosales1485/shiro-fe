@@ -12,14 +12,18 @@ import { useEsTelefono } from '../componentes/useEsTelefono';
 import { href, navegar } from '../navegacion/ruta';
 import { rutaDeTarea } from './detalle/PanelDeDetalles';
 
-type Props = { proyecto: ProyectoDTO; tablero: TableroDTO; tipoDeTablero: TipoTableroDTO; version: number; alNuevaTarea: () => void };
+type Props = {
+  proyecto: ProyectoDTO; tablero: TableroDTO; tipoDeTablero: TipoTableroDTO; version: number; alNuevaTarea: () => void;
+  // Solo para administradores en la computadora: lleva a importar desde Jira desde el proyecto vacio
+  alImportar?: () => void;
+};
 
 // Resultado de una carga, con la clave (tablero y version) que se pidio: si no es la actual, se esta cargando
 type Resultado = { clave: string } & ({ estado: 'listo'; tareas: TareaDTO[] } | { estado: 'error'; mensaje: string });
 
 type Carga = { estado: 'cargando' } | Resultado;
 
-export function Tablero({ proyecto, tablero, tipoDeTablero, version, alNuevaTarea }: Props) {
+export function Tablero({ proyecto, tablero, tipoDeTablero, version, alNuevaTarea, alImportar }: Props) {
   const [reintento, setReintento] = useState(0);
   const clave = `${tablero.uuid}:${version}:${reintento}`;
   const esTelefono = useEsTelefono();
@@ -63,6 +67,7 @@ export function Tablero({ proyecto, tablero, tipoDeTablero, version, alNuevaTare
             <p className="ui-empty-text">Todavía no hay tareas en este tablero. Creá la primera o traé el proyecto desde Jira.</p>
             <div className="ui-row" style={{ justifyContent: 'center' }}>
               <button className="ui-btn solid" type="button" onClick={alNuevaTarea}><Icono nombre="mas" />Nueva tarea</button>
+              {alImportar && <button className="ui-btn" type="button" onClick={alImportar}><Icono nombre="descargar" />Importar desde Jira</button>}
             </div>
           </div>
         </section>

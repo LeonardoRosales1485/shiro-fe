@@ -218,7 +218,8 @@ export function Espacio({ usuario, esAdministrador, alSalir }: Props) {
             usuario={usuario} />
         )}
         {proyecto && tablero && tipoDeTablero && (
-          <Tablero proyecto={proyecto} tablero={tablero} tipoDeTablero={tipoDeTablero} version={version} alNuevaTarea={() => setModal('tarea')} />
+          <Tablero proyecto={proyecto} tablero={tablero} tipoDeTablero={tipoDeTablero} version={version} alNuevaTarea={() => setModal('tarea')}
+            alImportar={esAdministrador && !esTelefono ? () => navegar('/importar') : undefined} />
         )}
       </main>
       {modal === 'tarea' && proyecto && tablero && datos && (
