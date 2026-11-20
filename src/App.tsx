@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { pedir } from './api/cliente';
 import type { UsuarioDTO } from './api/tipos';
 import { navegar } from './navegacion/ruta';
+import { CargaDeShiro } from './componentes/Cargas';
 import { Espacio } from './pantallas/Espacio';
 import { Ingreso } from './pantallas/Ingreso';
 
@@ -42,10 +43,10 @@ export function App() {
   };
 
   if (sesion === 'cargando') {
-    return <div className="sh-cargando" role="status"><span className="ui-spinner" aria-hidden="true" /><span className="sh-sr">Cargando</span></div>;
+    return <div className="sh-carga-pantalla"><CargaDeShiro /></div>;
   }
   if (sesion === null) {
     return <Ingreso alIngresar={cargarSesion} />;
   }
-  return <Espacio key={sesion.usuario.uuid} esAdministrador={sesion.esAdministrador} alSalir={salir} />;
+  return <Espacio key={sesion.usuario.uuid} usuario={sesion.usuario} esAdministrador={sesion.esAdministrador} alSalir={salir} />;
 }

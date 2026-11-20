@@ -2,7 +2,7 @@
 // cambia de tablero desde el menú.
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { error, pagina, PROYECTO, simularApi, tarea, TIPOS_DE_TABLERO, TIPOS_DE_TAREA } from './pruebas/api';
+import { error, pagina, PROYECTO, simularApi, simularTelefono, tarea, TIPOS_DE_TABLERO, TIPOS_DE_TAREA } from './pruebas/api';
 import { App } from './App';
 
 const CON_SESION = {
@@ -72,5 +72,30 @@ describe('App', () => {
 
     expect(await screen.findByRole('heading', { name: 'Ingresá a tu espacio' })).toBeInTheDocument();
     expect(pedidos.some((p) => p.ruta === '/api/usuario/cerrar-sesion')).toBe(true);
+  });
+
+  it('en el teléfono el menú se abre desde la barra y la administración queda para la computadora', async () => {
+    simularTelefono();
+    simularApi(CON_SESION);
+    render(<App />);
+
+    expect(await screen.findByRole('heading', { name: 'Shiro · Principal' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir menú' }));
+    const menu = screen.getByRole('dialog', { name: 'Menú' });
+    expect(menu).toHaveTextContent('Administración e importación se usan desde la computadora.');
+    expect(screen.queryByRole('link', { name: 'Usuarios y permisos' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Archivados' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('link', { name: 'QA' }));
+    expect(screen.queryByRole('dialog', { name: 'Menú' })).not.toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Shiro · QA' })).toBeInTheDocument();
+  });
+
+  it('en el teléfono la administración avisa que se usa desde la computadora', async () => {
+    simularTelefono();
+    window.history.replaceState(null, '', '/administracion');
+    simularApi(CON_SESION);
+    render(<App />);
+
+    expect(await screen.findByText('Usuarios y permisos se usa desde la computadora.')).toBeInTheDocument();
   });
 });

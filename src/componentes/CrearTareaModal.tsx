@@ -7,6 +7,7 @@ import type { Prioridad, ProyectoDTO, TipoTareaDTO } from '../api/tipos';
 import { ORDEN_DE_PRIORIDADES, PRIORIDADES, TIPOS } from './catalogos';
 import { Icono } from './Icono';
 import { AlertaDeError, Modal } from './Modal';
+import { BotonDeAccion } from './BotonDeAccion';
 
 type Creada = { uuid: string; clave: string };
 
@@ -61,7 +62,7 @@ export function CrearTareaModal({ proyecto, tableroUuid, tipos, alCrear, alCerra
     ? <button className="ui-btn solid" type="button" onClick={alCerrar}>Listo</button>
     : <>
       <button className="ui-btn ghost" type="button" onClick={alCerrar}>Cancelar</button>
-      <button className="ui-btn solid" type="button" disabled={!titulo.trim() || enviando} onClick={crear}>Crear tarea</button>
+      <BotonDeAccion clase="ui-btn solid" texto="Crear tarea" enviando={enviando} deshabilitado={!titulo.trim()} alHacerClic={crear} />
     </>;
 
   return (
