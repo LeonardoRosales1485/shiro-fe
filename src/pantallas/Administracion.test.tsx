@@ -44,28 +44,27 @@ describe('Administracion · usuarios', () => {
     expect(within(tabla).getAllByRole('row')).toHaveLength(2);
   });
 
-  it('crea una cuenta de Shiro con su contraseña inicial y sus grupos', async () => {
+  it('crea una cuenta de Shiro con nombre de usuario propio y muestra la contraseña que genera el backend', async () => {
     const pedidos = api({
-      'POST /api/usuario/guardar': (cuerpo) => ({ cuerpo: { uuid: 'u9', ...(cuerpo as object) } }),
-      'POST /api/usuario/u9/grupos': { cuerpo: [] },
+      'POST /api/usuario/crear-cuenta': (cuerpo) => ({ cuerpo: { uuid: 'u9', ...(cuerpo as object), contrasena: 'Vq7m-esaL-iro4-2xyz' } }),
     });
     mostrar();
 
     fireEvent.click(await screen.findByRole('button', { name: 'Cuenta de Shiro' }));
     const modal = screen.getByRole('dialog', { name: 'Crear cuenta de Shiro' });
     fireEvent.change(within(modal).getByLabelText('Nombre y apellido'), { target: { value: 'Ana Externa' } });
+    fireEvent.change(within(modal).getByLabelText('Nombre de usuario'), { target: { value: 'ana.externa' } });
     fireEvent.change(within(modal).getByLabelText('Correo'), { target: { value: 'ana@proveedor.com' } });
     fireEvent.click(within(modal).getByRole('checkbox', { name: 'QA' }));
-    const contrasena = (within(modal).getByLabelText('Contraseña inicial') as HTMLInputElement).value;
-    expect(contrasena.length).toBeGreaterThanOrEqual(14);
     expect(within(modal).queryByRole('checkbox', { name: 'Administradores' })).not.toBeInTheDocument();
     fireEvent.click(within(modal).getByRole('button', { name: 'Crear cuenta' }));
 
-    expect(await screen.findByText('Se creó la cuenta de Ana Externa. Compartí la contraseña por un canal seguro.')).toBeInTheDocument();
-    expect(pedidos.find((p) => p.ruta === '/api/usuario/guardar')?.cuerpo).toEqual({
-      nombre: 'Ana Externa', nombreDeUsuario: 'ana@proveedor.com', email: 'ana@proveedor.com', contrasena,
+    expect(await within(modal).findByLabelText('Contraseña inicial')).toHaveValue('Vq7m-esaL-iro4-2xyz');
+    expect(pedidos.find((p) => p.ruta === '/api/usuario/crear-cuenta')?.cuerpo).toEqual({
+      nombre: 'Ana Externa', nombreDeUsuario: 'ana.externa', email: 'ana@proveedor.com', grupos: ['gQ'],
     });
-    expect(pedidos.find((p) => p.ruta === '/api/usuario/u9/grupos')?.cuerpo).toEqual({ grupos: ['gQ'] });
+    fireEvent.click(within(modal).getByRole('button', { name: 'Listo' }));
+    expect(await screen.findByText('Se creó la cuenta de Ana Externa. Compartí la contraseña por un canal seguro.')).toBeInTheDocument();
   });
 
   it('cambia los grupos de una persona', async () => {
@@ -117,7 +116,7 @@ describe('Administracion · grupos', () => {
     mostrar();
 
     fireEvent.click(await screen.findByRole('tab', { name: 'Grupos (3)' }));
-    expect(screen.getByRole('button', { name: 'Administradores 1 persona' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Administradores 2 personas' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Programadores 2 personas' }));
     const detalle = screen.getByRole('region', { name: 'Programadores' });
     expect(within(detalle).getByText('Tomás Aguirre')).toBeInTheDocument();
@@ -135,9 +134,12 @@ describe('Administracion · grupos', () => {
     mostrar(ADMINISTRADOR);
 
     fireEvent.click(await screen.findByRole('tab', { name: 'Grupos (3)' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Administradores 1 persona' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Administradores 2 personas' }));
     const detalle = screen.getByRole('region', { name: 'Administradores' });
     expect(within(detalle).getByText('Grupo del sistema')).toBeInTheDocument();
+    expect(within(detalle).getByText('Martina Ferreyra')).toBeInTheDocument();
+    expect(within(detalle).getByText('Solo el super admin')).toBeInTheDocument();
+    expect(within(detalle).queryByRole('button', { name: 'Sacar a Martina Ferreyra' })).not.toBeInTheDocument();
     expect(within(detalle).queryByLabelText('Sumar persona')).not.toBeInTheDocument();
     expect(within(detalle).queryByRole('button', { name: /Archivar grupo/ })).not.toBeInTheDocument();
   });

@@ -23,6 +23,8 @@ const CATALOGO = {
   ],
 };
 
+const PROYECTOS_DE_JIRA = [{ clave: 'PTR', nombre: 'Portal de Trámites' }, { clave: 'MDA', nombre: 'Mesa de Ayuda' }];
+
 const RESUMEN = {
   tareasCreadas: 40, tareasActualizadas: 2, tareasPorTipo: { HISTORIA: 30, EPICA: 12 }, comentarios: 120, sprints: 5, versiones: 2,
   fallas: [{ claveJira: 'PTR-201', motivo: 'Tipo «Spike» sin mapear' }], advertencias: [], usuariosImportados: ['Usuario importado Consultora'],
@@ -47,7 +49,10 @@ describe('Importacion', () => {
     let consultas = 0;
     const alIrAlTablero = vi.fn();
     const pedidos = api({
+      'POST /api/importacion/proyectos-de-jira': { cuerpo: PROYECTOS_DE_JIRA },
       'POST /api/importacion/conectar': { cuerpo: CATALOGO },
+      'POST /api/usuario/crear-cuenta': (cuerpo) => ({ cuerpo: { uuid: 'u9', ...(cuerpo as object), contrasena: 'Abcd-Efgh-Jkmn-Pqrs' } }),
+      'GET /api/importacion/i1/catalogo': { cuerpo: { ...CATALOGO, usuarios: CATALOGO.usuarios.map((u) => ({ ...u, usuarioUuid: u.usuarioUuid ?? 'u9' })) } },
       'POST /api/importacion/i1/mapeo': { cuerpo: { uuid: 'i1', estado: 'MAPEADA', prefijo: 'PTR' } },
       'POST /api/importacion/i1/ejecutar': { cuerpo: { uuid: 'i1', estado: 'EN_CURSO', prefijo: 'PTR' } },
       'GET /api/importacion/uuid/i1': () => {
@@ -62,8 +67,13 @@ describe('Importacion', () => {
     fireEvent.change(await screen.findByLabelText('URL de Jira'), { target: { value: 'https://empresa.atlassian.net' } });
     fireEvent.change(screen.getByLabelText('Correo de la cuenta'), { target: { value: 'admin@empresa.com' } });
     fireEvent.change(screen.getByLabelText('Token de la API'), { target: { value: 'secreto-de-prueba' } });
-    fireEvent.change(screen.getByLabelText('Clave del proyecto en Jira'), { target: { value: 'PTR' } });
-    fireEvent.change(screen.getByLabelText('Prefijo en Shiro'), { target: { value: 'ptr' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Probar conexión' }));
+    expect(await screen.findByText('Conectado: 2 proyectos visibles.')).toBeInTheDocument();
+    expect(pedidos.find((p) => p.ruta === '/api/importacion/proyectos-de-jira')?.cuerpo).toEqual({
+      url: 'https://empresa.atlassian.net', correo: 'admin@empresa.com', token: 'secreto-de-prueba',
+    });
+    fireEvent.change(screen.getByLabelText('Proyecto de Jira'), { target: { value: 'PTR' } });
+    expect(screen.getByLabelText('Prefijo en Shiro')).toHaveValue('PTR');
     fireEvent.click(screen.getByRole('button', { name: 'Conectar' }));
 
     expect(await screen.findByText('Conectado con «Portal de Trámites»: 3 tableros, 3 tipos y 2 usuarios.')).toBeInTheDocument();
@@ -91,7 +101,15 @@ describe('Importacion', () => {
 
     const usuarios = screen.getByRole('table', { name: 'Usuarios de Jira' });
     expect(within(usuarios).getByRole('row', { name: /lucas.benitez@blueopendata.com Lucas Benítez Vinculado/ })).toBeInTheDocument();
-    expect(within(usuarios).getByRole('row', { name: /ext.consultora@proveedor.com — Se crea sin acceso/ })).toBeInTheDocument();
+    expect(within(usuarios).getByRole('row', { name: /ext.consultora@proveedor.com — Sin cuenta/ })).toBeInTheDocument();
+    fireEvent.click(within(usuarios).getByRole('button', { name: 'Crear cuenta de ext.consultora@proveedor.com' }));
+    const cuenta = screen.getByRole('dialog', { name: 'Crear cuenta de Shiro' });
+    expect(within(cuenta).getByLabelText('Correo')).toHaveValue('ext.consultora@proveedor.com');
+    expect(within(cuenta).getByLabelText('Nombre y apellido')).toHaveValue('Consultora');
+    fireEvent.change(within(cuenta).getByLabelText('Nombre de usuario'), { target: { value: 'consultora' } });
+    fireEvent.click(within(cuenta).getByRole('button', { name: 'Crear cuenta' }));
+    fireEvent.click(await within(cuenta).findByRole('button', { name: 'Listo' }));
+    expect(await within(usuarios).findByRole('row', { name: /ext.consultora@proveedor.com .* Vinculado/ })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Importar' }));
 
     expect(await screen.findByText(/Importación terminada/)).toBeInTheDocument();
@@ -115,15 +133,13 @@ describe('Importacion', () => {
   });
 
   it('muestra el error de conexión', async () => {
-    api({ 'POST /api/importacion/conectar': error(400, 'JIRA_URL_NO_PERMITIDA', 'La URL tiene que ser un sitio de Jira Cloud.') });
+    api({ 'POST /api/importacion/proyectos-de-jira': error(400, 'JIRA_URL_NO_PERMITIDA', 'La URL tiene que ser un sitio de Jira Cloud.') });
     mostrar();
 
     fireEvent.change(await screen.findByLabelText('URL de Jira'), { target: { value: 'https://otro.com' } });
     fireEvent.change(screen.getByLabelText('Correo de la cuenta'), { target: { value: 'admin@empresa.com' } });
     fireEvent.change(screen.getByLabelText('Token de la API'), { target: { value: 'x' } });
-    fireEvent.change(screen.getByLabelText('Clave del proyecto en Jira'), { target: { value: 'PTR' } });
-    fireEvent.change(screen.getByLabelText('Prefijo en Shiro'), { target: { value: 'PTR' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Conectar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Probar conexión' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('La URL tiene que ser un sitio de Jira Cloud.');
   });
@@ -144,5 +160,30 @@ describe('Importacion', () => {
     expect(await screen.findByRole('region', { name: 'Resumen de la importación' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Volver a importar' }));
     await waitFor(() => expect(pedidos.some((p) => p.ruta === '/api/importacion/i0/ejecutar')).toBe(true));
+  });
+
+  it('muestra el avance de una importación en curso y la cancela', async () => {
+    const avance = JSON.stringify({ inicio: new Date(Date.now() - 4 * 60000).toISOString(), versiones: 9, versionesTotales: 9, sprints: 22, sprintsTotales: 22,
+      tareas: 812, tareasTotales: 1291, tareasConComentariosLeidos: 0, comentarios: 0, comentariosTotales: null });
+    let estado = 'EN_CURSO';
+    const pedidos = api({
+      'POST /api/importacion/paginar': { cuerpo: { contenido: [{ uuid: 'i0', prefijo: 'MDA', nombreProyectoJira: 'Mesa de Ayuda', estado: 'EN_CURSO' }] } },
+      'GET /api/importacion/uuid/i0': () => ({ cuerpo: { uuid: 'i0', estado, prefijo: 'MDA', avance, cancelacionPedida: false,
+        resumen: estado === 'CANCELADA' ? JSON.stringify({ ...RESUMEN, tareasCreadas: 0, tareasActualizadas: 0, fallas: [{ claveJira: 'IMPORTACION_CANCELADA', motivo: 'Se canceló.' }] }) : null } }),
+      'POST /api/importacion/i0/cancelar': () => {
+        estado = 'CANCELADA';
+        return { cuerpo: { uuid: 'i0', estado: 'EN_CURSO', prefijo: 'MDA', avance, cancelacionPedida: true } };
+      },
+    });
+    mostrar();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver resumen de MDA' }));
+    const resumen = await screen.findByRole('region', { name: 'Resumen de la importación' });
+    expect(await within(resumen).findByText('Tareas 812 de 1.291')).toBeInTheDocument();
+    expect(within(resumen).getByText('Sprints 22 de 22')).toBeInTheDocument();
+    expect(within(resumen).getByRole('progressbar', { name: 'Avance de la importación' })).toBeInTheDocument();
+    fireEvent.click(within(resumen).getByRole('button', { name: 'Cancelar importación' }));
+    await waitFor(() => expect(pedidos.some((p) => p.ruta === '/api/importacion/i0/cancelar')).toBe(true));
+    expect(await screen.findByText(/Se canceló la importación/)).toBeInTheDocument();
   });
 });
