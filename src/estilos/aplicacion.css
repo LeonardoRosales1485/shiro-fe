@@ -82,3 +82,31 @@
 .sh-cifra{display:grid;gap:4px;padding:var(--space-3)}
 .sh-cifra-valor{font-size:28px;line-height:1.1}
 @media (max-width:760px){.sh-admin-grupos{grid-template-columns:1fr}}
+/* T6.6 loaders */
+.sh-carga-gato{position:relative;width:360px;max-width:100%;height:216px;overflow:hidden;margin:auto}
+.sh-carga-gato-lienzo{position:absolute;left:0;top:0;width:1200px;height:720px;transform:scale(.3);transform-origin:0 0}
+.sh-carga-pantalla{display:grid;place-items:center;min-height:60vh}
+.sh-carga-avance{display:grid;justify-items:center;gap:8px}
+.sh-carga-avance-valor{font:700 22px/28px var(--font-sans);font-variant-numeric:tabular-nums}
+.sh-carga-avance-valor .ui-muted{font-size:15px;margin-left:3px}
+.sh-carga-avance path{transition:stroke-dashoffset .4s ease}
+/* T6.6 version de telefono */
+.sh-espacio.is-movil{display:block}
+.sh-espacio.is-movil .sh-principal{padding:var(--space-3) var(--space-3) 96px}
+.sh-barra-movil{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:var(--space-2);margin:var(--space-3) var(--space-3) 0;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md)}
+.sh-barra-titulo{margin:0;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sh-menu-movil{position:fixed;inset:0;z-index:50;display:flex;justify-content:flex-start;align-items:stretch;padding:0}
+.sh-menu-movil .sh-side{width:min(310px,85vw);height:100%;overflow:auto;border-radius:0}
+.sh-menu-pie{display:grid;gap:8px;padding:12px 4px;border-top:1px solid var(--border)}
+.sh-tablero-movil{display:grid;gap:var(--space-3)}
+.sh-pestanas-movil{overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+.sh-lista-movil{display:grid;gap:var(--space-3)}
+.sh-accion-fija{position:fixed;left:0;right:0;bottom:0;z-index:15;padding:12px 16px;background:var(--surface);border-top:1px solid var(--border)}
+.sh-accion-fija .ui-btn{width:100%;justify-content:center}
+@media (max-width:760px){
+  .ui-page-head .ui-crumbs{display:none}
+  .sh-detalle-principal,.sh-detalle-lateral{flex-basis:100%}
+  .ui-modal{max-height:calc(100vh - 24px);overflow:auto}
+  .ui-table-wrap{overflow-x:auto}
+  .sh-filtros .ui-field{min-width:100%}
+}

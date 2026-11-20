@@ -3,7 +3,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
-  COMENTARIOS, error, HISTORIAL, pagina, PROYECTO, RELACIONES, simularApi, tarea, tareaDetalle, TIPOS_DE_TABLERO, TIPOS_DE_TAREA,
+  COMENTARIOS, error, HISTORIAL, pagina, PROYECTO, RELACIONES, simularApi, simularTelefono, tarea, tareaDetalle, TIPOS_DE_TABLERO, TIPOS_DE_TAREA,
   USUARIO, USUARIOS_DEL_PROYECTO, type Respuesta,
 } from '../pruebas/api';
 import { DetalleDeTarea } from './DetalleDeTarea';
@@ -253,5 +253,20 @@ describe('DetalleDeTarea', () => {
 
     await vi.waitFor(() => expect(window.location.pathname).toBe('/proyecto/SHI/PRINCIPAL'));
     expect(pedidos.some((p) => p.ruta === '/api/tarea/u-SHI-149/archivar')).toBe(true);
+  });
+
+  it('en el teléfono las acciones de la tarea se abren desde «⋯»', async () => {
+    simularTelefono();
+    api();
+    mostrar();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Acciones de la tarea' }));
+    const acciones = screen.getByRole('dialog', { name: 'Acciones de tarea' });
+    expect(within(acciones).getByRole('button', { name: 'Editar' })).toBeInTheDocument();
+    expect(within(acciones).getByRole('button', { name: 'Clonar a otro tablero' })).toBeInTheDocument();
+    expect(within(acciones).getByRole('button', { name: 'Relacionar con otra tarea' })).toBeInTheDocument();
+    fireEvent.click(within(acciones).getByRole('button', { name: 'Archivar' }));
+    expect(screen.queryByRole('dialog', { name: 'Acciones de tarea' })).not.toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Archivar tarea' })).toBeInTheDocument();
   });
 });

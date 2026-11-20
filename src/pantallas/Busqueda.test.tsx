@@ -1,7 +1,7 @@
 // T6.4: búsqueda de tareas en todos los proyectos visibles, con texto y filtros (prototipo "Búsqueda").
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { pagina, PROYECTO, simularApi, SPRINTS, TIPOS_DE_TABLERO, TIPOS_DE_TAREA, USUARIO, USUARIOS_DEL_PROYECTO, VERSIONES, type Pedido } from '../pruebas/api';
+import { pagina, PROYECTO, simularApi, simularTelefono, SPRINTS, TIPOS_DE_TABLERO, TIPOS_DE_TAREA, USUARIO, USUARIOS_DEL_PROYECTO, VERSIONES, type Pedido } from '../pruebas/api';
 import { Busqueda } from './Busqueda';
 
 const RESULTADOS = [
@@ -105,5 +105,18 @@ describe('Busqueda', () => {
     mostrar();
 
     expect(await screen.findByText('No hay tareas que coincidan con la búsqueda.')).toBeInTheDocument();
+  });
+
+  it('en el teléfono los filtros se pliegan detrás de «Filtros» con la cantidad elegida', async () => {
+    simularTelefono();
+    api();
+    mostrar();
+
+    await screen.findByRole('region', { name: 'Resultados de la búsqueda' });
+    expect(screen.queryByLabelText('Etiqueta')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Filtros 0' }));
+    fireEvent.change(screen.getByLabelText('Etiqueta'), { target: { value: 'importador' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Asignadas a mí' }));
+    expect(screen.getByRole('button', { name: 'Filtros 2' })).toBeInTheDocument();
   });
 });

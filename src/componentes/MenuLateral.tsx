@@ -5,7 +5,7 @@
 import { useState, type MouseEvent } from 'react';
 import type { ProyectoDTO } from '../api/tipos';
 import { href, navegar } from '../navegacion/ruta';
-import { ICONOS_DE_TABLERO } from './catalogos';
+import { ICONOS_DE_TABLERO, iniciales } from './catalogos';
 import { Icono, Isotipo, type NombreDeIcono } from './Icono';
 import { etiquetaDeTema, useTema } from './Tema';
 
@@ -17,6 +17,9 @@ type Props = {
   esAdministrador: boolean;
   alCrearProyecto: () => void;
   alSalir: () => void;
+  // Version de telefono (T6.6): sin archivados ni administracion (se usan desde la computadora), con quien ingreso y
+  // un boton para cerrar el cajon
+  movil?: { nombreDelUsuario: string; rol: string | null; alCerrar: () => void };
 };
 
 // Secciones de planificacion del proyecto (T6.3)
@@ -37,12 +40,18 @@ const ADMINISTRACION: Grupo = {
 
 const CUENTA: Grupo = { titulo: 'Cuenta', paginas: [{ seccion: 'tokens', nombre: 'Tokens MCP', icono: 'llave' }] };
 
+// Grupos del menu: en el telefono no van archivados ni administracion (T6.6)
+function gruposDelMenu(esAdministrador: boolean, movil: boolean): Grupo[] {
+  if (movil) return [{ ...GENERAL, paginas: GENERAL.paginas.filter((p) => p.seccion !== 'archivados') }, CUENTA];
+  return esAdministrador ? [GENERAL, ADMINISTRACION, CUENTA] : [GENERAL, CUENTA];
+}
+
 // Ruta del tablero de un proyecto
 export function rutaDeTablero(prefijo: string, codigo: string): string {
   return `/proyecto/${prefijo}/${codigo}`;
 }
 
-export function MenuLateral({ proyectos, proyecto, codigoDeTablero, seccion = null, esAdministrador, alCrearProyecto, alSalir }: Props) {
+export function MenuLateral({ proyectos, proyecto, codigoDeTablero, seccion = null, esAdministrador, alCrearProyecto, alSalir, movil }: Props) {
   const [riel, setRiel] = useState(false);
   const [tema, alternarTema] = useTema();
   const ir = (ruta: string) => (evento: MouseEvent) => {
@@ -55,8 +64,10 @@ export function MenuLateral({ proyectos, proyecto, codigoDeTablero, seccion = nu
     <nav className={`ui-side sh-side ${riel ? 'rail' : ''}`} aria-label="Principal" id="menu-principal">
       <div className="ui-side-brand sh-brand">
         <Isotipo tamano={28} /><span>Shiro</span><span className="ui-spacer" />
-        <button className="ui-btn ghost icon sm sh-toggle" type="button" aria-controls="menu-principal" aria-expanded={!riel}
-          aria-label={etiquetaDelRiel} title={etiquetaDelRiel} onClick={() => setRiel(!riel)}><Icono nombre="contraer" /></button>
+        {movil
+          ? <button className="ui-btn ghost icon sm" type="button" aria-label="Cerrar menú" onClick={movil.alCerrar}><Icono nombre="cerrar" /></button>
+          : <button className="ui-btn ghost icon sm sh-toggle" type="button" aria-controls="menu-principal" aria-expanded={!riel}
+            aria-label={etiquetaDelRiel} title={etiquetaDelRiel} onClick={() => setRiel(!riel)}><Icono nombre="contraer" /></button>}
       </div>
       {proyectos.length > 0 && (
         <label className="ui-field sh-side-proj" style={{ padding: '0 4px 8px' }}>
@@ -84,7 +95,7 @@ export function MenuLateral({ proyectos, proyecto, codigoDeTablero, seccion = nu
           {PLANIFICACION.map((p) => <Enlace key={p.seccion} pagina={p} ruta={`/proyecto/${proyecto.prefijo}/${p.seccion}`} activo={seccion === p.seccion} />)}
         </>
       )}
-      {(esAdministrador ? [GENERAL, ADMINISTRACION, CUENTA] : [GENERAL, CUENTA]).map((grupo) => (
+      {gruposDelMenu(esAdministrador, movil !== undefined).map((grupo) => (
         <div key={grupo.titulo} className="sh-grupo-menu">
           <div className="ui-side-title">{grupo.titulo}</div>
           {grupo.paginas.map((p) => <Enlace key={p.seccion} pagina={p} ruta={`/${p.seccion}`} activo={seccion === p.seccion} />)}
@@ -96,6 +107,15 @@ export function MenuLateral({ proyectos, proyecto, codigoDeTablero, seccion = nu
         </div>
       ))}
       <span className="ui-spacer" />
+      {movil && (
+        <div className="sh-menu-pie">
+          <span className="ui-row" style={{ gap: 8 }}>
+            <span className="ui-avatar sm" aria-hidden="true">{iniciales(movil.nombreDelUsuario)}</span>
+            <span><strong>{movil.nombreDelUsuario}</strong>{movil.rol && <span className="ui-muted" style={{ display: 'block' }}>{movil.rol}</span>}</span>
+          </span>
+          <p className="ui-help" style={{ margin: 0 }}>Administración e importación se usan desde la computadora.</p>
+        </div>
+      )}
       <button className="ui-side-item sh-side-btn" type="button" title={etiquetaDeTema(tema)} onClick={alternarTema}>
         <Icono nombre={tema === 'dark' ? 'sol' : 'luna'} /><span>{etiquetaDeTema(tema)}</span>
       </button>

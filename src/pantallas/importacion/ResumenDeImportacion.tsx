@@ -2,6 +2,7 @@
 // 55 resuelta el 20/11): mientras corre muestra cuándo empezó, cuánto falta, el porcentaje y cuántas tareas,
 // comentarios, sprints y versiones lleva de cuántos hay, y permite cancelarla (no queda nada de esa ejecución); se
 // puede cerrar la pantalla. Al terminar muestra lo importado y lo que hay que revisar.
+import { CargaConAvance } from '../../componentes/Cargas';
 import { fecha } from '../../componentes/catalogos';
 import { leerJson, minutosRestantes, porcentaje, type Avance, type ImportacionDTO, type Resumen } from './mapeo';
 
@@ -80,12 +81,7 @@ function EnCurso({ avance, cancelando, ocupado, alCancelar }: { avance: Avance |
           {`Empezó a las ${hora(avance.inicio)}${faltan ? ` · faltan unos ${faltan} ${faltan === 1 ? 'minuto' : 'minutos'}` : ''}`}
         </p>
       )}
-      <div className="sh-avance">
-        <span>{`${hecho} %`}</span>
-        <div className="sh-barra" role="progressbar" aria-label="Avance de la importación" aria-valuemin={0} aria-valuemax={100} aria-valuenow={hecho}>
-          <span style={{ width: `${hecho}%` }} />
-        </div>
-      </div>
+      <CargaConAvance porcentaje={hecho} etiqueta="Avance de la importación" />
       {avance && (
         <ul className="sh-vinculos">
           <li><span>{conteo('Tareas', avance.tareas, avance.tareasTotales)}</span></li>

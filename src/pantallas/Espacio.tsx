@@ -6,8 +6,12 @@ import { mensajeDeError, pedir } from '../api/cliente';
 import { pedidoDePaginado, type Pagina, type ProyectoDTO, type TipoTableroDTO, type TipoTareaDTO, type UsuarioDTO } from '../api/tipos';
 import { CrearProyectoModal } from '../componentes/CrearProyectoModal';
 import { CrearTareaModal } from '../componentes/CrearTareaModal';
+import { CargaDeShiro, ErrorConReintento } from '../componentes/Cargas';
+import { iniciales } from '../componentes/catalogos';
 import { Icono } from '../componentes/Icono';
 import { MenuLateral, rutaDeTablero } from '../componentes/MenuLateral';
+import { BotonDeTema } from '../componentes/Tema';
+import { useEsTelefono } from '../componentes/useEsTelefono';
 import { navegar, useRuta } from '../navegacion/ruta';
 import { Administracion } from './Administracion';
 import { Archivados } from './Archivados';
@@ -43,6 +47,49 @@ function leerRuta(ruta: string): { prefijo: string; codigo: string | null; clave
   return partes ? { prefijo: partes[1], codigo: partes[2], clave: null } : null;
 }
 
+// Paginas que en el telefono se usan desde la computadora (T6.6), con su nombre
+const SOLO_COMPUTADORA: Partial<Record<General, string>> = { administracion: 'Usuarios y permisos', importar: 'Importar desde Jira', archivados: 'Archivados' };
+
+const TITULOS_GENERALES: Record<General, string> = {
+  busqueda: 'Búsqueda', archivados: 'Archivados', tokens: 'Tokens MCP', administracion: 'Usuarios y permisos', importar: 'Importar desde Jira',
+};
+
+// Titulo de la barra del telefono para la pagina actual
+function tituloMovil(proyecto: ProyectoDTO | null, tablero: ProyectoDTO['tableros'][number] | null, clave: string | null,
+  seccion: Seccion | null, general: General | null): string {
+  if (general) return TITULOS_GENERALES[general];
+  if (!proyecto) return 'Shiro';
+  if (clave) return clave;
+  if (seccion) return `${proyecto.nombre} · ${seccion === 'backlog' ? 'Backlog' : 'Versiones'}`;
+  return tablero ? `${proyecto.nombre} · ${tablero.tipoTableroNombre}` : proyecto.nombre;
+}
+
+// Barra superior del telefono (prototipo "Tablero en teléfono"): menu, titulo, tema y quien ingreso
+function BarraMovil({ titulo, nombreDelUsuario, alAbrirMenu }: { titulo: string; nombreDelUsuario: string; alAbrirMenu: () => void }) {
+  return (
+    <header className="sh-barra-movil">
+      <button className="ui-btn ghost icon sm" type="button" aria-label="Abrir menú" onClick={alAbrirMenu}><Icono nombre="lista" /></button>
+      <h1 className="sh-barra-titulo">{titulo}</h1>
+      <span className="ui-spacer" />
+      <BotonDeTema />
+      <span className="ui-avatar sm" title={nombreDelUsuario}>{iniciales(nombreDelUsuario)}</span>
+    </header>
+  );
+}
+
+// Aviso de una pagina que en el telefono se usa desde la computadora
+function SoloComputadora({ pagina }: { pagina: string }) {
+  return (
+    <section className="ui-card">
+      <div className="ui-empty">
+        <span className="ui-empty-icon"><Icono nombre="columnas" /></span>
+        <p className="ui-empty-title">{`${pagina} se usa desde la computadora.`}</p>
+        <p className="ui-empty-text">Abrí Shiro en una computadora para administrar usuarios, permisos, archivados e importaciones.</p>
+      </div>
+    </section>
+  );
+}
+
 // Proyectos visibles y catalogos de tableros y tipos de tarea
 async function leerDatos(): Promise<Datos> {
   const [proyectos, tiposDeTablero, tiposDeTarea] = await Promise.all([
@@ -61,6 +108,14 @@ export function Espacio({ usuario, esAdministrador, alSalir }: Props) {
   const [version, setVersion] = useState(0);
 
   const [lectura, setLectura] = useState(0);
+  const esTelefono = useEsTelefono();
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  // El cajon del menu se cierra al navegar
+  const [rutaDelMenu, setRutaDelMenu] = useState(ruta);
+  if (rutaDelMenu !== ruta) {
+    setRutaDelMenu(ruta);
+    setMenuAbierto(false);
+  }
   // Ruta a la que ir cuando termine la proxima lectura (por ejemplo, el tablero de un proyecto recien importado)
   const destino = useRef<string | null>(null);
 
@@ -105,13 +160,31 @@ export function Espacio({ usuario, esAdministrador, alSalir }: Props) {
     navegar(rutaDeTablero(nuevo.prefijo, 'PRINCIPAL'));
   };
 
+  const menu = (movil?: { nombreDelUsuario: string; rol: string | null; alCerrar: () => void }) => (
+    <MenuLateral proyectos={datos?.proyectos ?? []} proyecto={proyectoDelMenu} codigoDeTablero={elegida?.codigo ?? null} seccion={seccion ?? general}
+      esAdministrador={esAdministrador} alCrearProyecto={() => setModal('proyecto')} alSalir={alSalir} movil={movil} />
+  );
+  const soloComputadora = esTelefono && general && SOLO_COMPUTADORA[general];
+
   return (
-    <div className="sh-espacio">
-      <MenuLateral proyectos={datos?.proyectos ?? []} proyecto={proyectoDelMenu} codigoDeTablero={elegida?.codigo ?? null} seccion={seccion ?? general}
-        esAdministrador={esAdministrador} alCrearProyecto={() => setModal('proyecto')} alSalir={alSalir} />
+    <div className={`sh-espacio ${esTelefono ? 'is-movil' : ''}`}>
+      {!esTelefono && menu()}
+      {esTelefono && (
+        <BarraMovil titulo={tituloMovil(proyecto, tablero, clave, seccion, general)} nombreDelUsuario={usuario.nombre || usuario.nombreDeUsuario}
+          alAbrirMenu={() => setMenuAbierto(true)} />
+      )}
+      {esTelefono && menuAbierto && (
+        <div className="ui-veil sh-menu-movil" role="dialog" aria-modal="true" aria-label="Menú" onClick={(e) => e.target === e.currentTarget && setMenuAbierto(false)}>
+          {menu({ nombreDelUsuario: usuario.nombre || usuario.nombreDeUsuario, rol: esAdministrador ? 'Administrador' : null, alCerrar: () => setMenuAbierto(false) })}
+        </div>
+      )}
       <main className="ui-main sh-principal">
-        {error && <div className="ui-alert is-danger" role="alert"><Icono nombre="alerta" /><span>{error}</span></div>}
-        {!datos && !error && <div className="ui-row ui-muted" role="status"><span className="ui-spinner" aria-hidden="true" />Cargando tu espacio...</div>}
+        {error && <ErrorConReintento mensaje={`No se pudo cargar tu espacio. ${error}`} alReintentar={() => {
+          setError(null);
+          setLectura((v) => v + 1);
+        }} />}
+        {!datos && !error && <div className="sh-carga-pantalla"><CargaDeShiro /></div>}
+        {soloComputadora && <SoloComputadora pagina={soloComputadora} />}
         {datos && datos.proyectos.length === 0 && !general && (
           <section className="ui-card">
             <div className="ui-empty">
@@ -126,13 +199,13 @@ export function Espacio({ usuario, esAdministrador, alSalir }: Props) {
         {general === 'busqueda' && datos && (
           <Busqueda proyectos={datos.proyectos} tiposDeTablero={datos.tiposDeTablero} tiposDeTarea={datos.tiposDeTarea} usuario={usuario} />
         )}
-        {general === 'archivados' && <Archivados esAdministrador={esAdministrador} />}
+        {general === 'archivados' && !soloComputadora && <Archivados esAdministrador={esAdministrador} />}
         {general === 'tokens' && <Tokens nombreDelUsuario={usuario.nombre || usuario.nombreDeUsuario} />}
-        {general === 'administracion' && datos && (
+        {general === 'administracion' && datos && !soloComputadora && (
           <Administracion usuario={usuario} proyectos={datos.proyectos} tiposDeTablero={datos.tiposDeTablero} alCrearProyecto={() => setModal('proyecto')}
             alCambiarProyectos={() => setLectura((v) => v + 1)} />
         )}
-        {general === 'importar' && datos && (
+        {general === 'importar' && datos && !soloComputadora && (
           <Importacion tiposDeTablero={datos.tiposDeTablero} tiposDeTarea={datos.tiposDeTarea} alIrAlTablero={(prefijo) => {
             destino.current = rutaDeTablero(prefijo, 'PRINCIPAL');
             setLectura((v) => v + 1);

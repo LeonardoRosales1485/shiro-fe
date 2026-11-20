@@ -6,6 +6,7 @@ import './estilos/tokens.css';
 import './estilos/bundle.css';
 import './estilos/shiro.css';
 import './estilos/aplicacion.css';
+import './estilos/carga-gato.css';
 import { App } from './App';
 import { aplicarTema } from './componentes/Tema';
 
