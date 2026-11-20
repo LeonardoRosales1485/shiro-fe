@@ -96,7 +96,7 @@
 .sh-barra-movil{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:var(--space-2);margin:var(--space-3) var(--space-3) 0;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md)}
 .sh-barra-titulo{margin:0;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sh-menu-movil{position:fixed;inset:0;z-index:50;display:flex;justify-content:flex-start;align-items:stretch;padding:0}
-.sh-menu-movil .sh-side{width:min(310px,85vw);height:100%;overflow:auto;border-radius:0}
+.sh-menu-movil .sh-side{width:min(310px,85vw);height:100%;max-height:100vh;position:relative;top:auto;overflow-y:auto;border-radius:0}
 .sh-menu-pie{display:grid;gap:8px;padding:12px 4px;border-top:1px solid var(--border)}
 .sh-tablero-movil{display:grid;gap:var(--space-3)}
 .sh-pestanas-movil{overflow-x:auto;white-space:nowrap;scrollbar-width:none}
@@ -105,7 +105,11 @@
 .sh-accion-fija .ui-btn{width:100%;justify-content:center}
 @media (max-width:760px){
   .ui-page-head .ui-crumbs{display:none}
-  .sh-detalle-principal,.sh-detalle-lateral{flex-basis:100%}
+  .sh-detalle-principal,.sh-detalles{flex-basis:100%}
+  .sh-detalles{order:-1}
+  .sh-espacio.is-movil .ui-page-head{flex-wrap:nowrap;align-items:flex-start}
+  .sh-espacio.is-movil .ui-page-title{flex:1;min-width:0;font-size:22px}
+  .sh-espacio.is-movil .ui-page-head .ui-spacer{display:none}
   .ui-modal{max-height:calc(100vh - 24px);overflow:auto}
   .ui-table-wrap{overflow-x:auto}
   .sh-filtros .ui-field{min-width:100%}
