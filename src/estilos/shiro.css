@@ -22,6 +22,14 @@
 .sh-col-head{display:flex;align-items:center;gap:8px;padding:2px 4px 4px;font:700 13px/18px var(--font-sans)}
 .sh-count{display:inline-grid;place-items:center;min-width:22px;height:20px;padding:0 6px;border-radius:var(--radius-pill);background:var(--surface);border:1px solid var(--border-strong);font:700 11px/1 var(--font-sans);color:var(--neutral-text)}
 .sh-task{display:grid;gap:10px;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);color:var(--text);text-decoration:none}
+/* Drag & drop del tablero: la tarjeta origen se atenúa, la columna destino se resalta y el clon flotante no captura clics */
+.sh-task-origen{opacity:.35}
+.sh-task-origen .sh-task{cursor:grabbing;border-color:var(--primary)}
+.sh-col-destino{border-color:var(--primary);background:var(--primary-soft)}
+.sh-drag-overlay{max-width:320px;pointer-events:none;border-radius:var(--radius-md)}
+.sh-drag-overlay .sh-task{border-color:var(--primary);box-shadow:var(--shadow-sm)}
+.sh-mover-movil{display:grid;gap:6px}
+.sh-mover-movil .ui-select{min-height:36px}
 .sh-task:hover{border-color:var(--border-strong)}
 .sh-task-title{margin:0;font:600 13px/18px var(--font-sans)}
 .sh-task-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}

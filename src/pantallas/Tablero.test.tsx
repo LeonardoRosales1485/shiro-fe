@@ -1,5 +1,5 @@
 // T6.1: el tablero muestra una columna por estado de su tipo, con sus tareas, y el estado vacío del proyecto nuevo.
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { error, pagina, PROYECTO, simularApi, simularTelefono, tarea, TIPOS_DE_TABLERO } from '../pruebas/api';
 import { Tablero } from './Tablero';
@@ -92,5 +92,70 @@ describe('Tablero', () => {
     expect(screen.queryByText('Tablero')).not.toBeInTheDocument();
     expect(screen.getByText('Base')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Nueva tarea' })).toBeInTheDocument();
+  });
+
+  it('el clic y Enter abren el detalle sin iniciar un movimiento', async () => {
+    const pedidos = simularApi({
+      'POST /api/tarea/paginar': { cuerpo: pagina([tarea('SHI-1', 'Login', 'e1')]) },
+      'POST /api/tarea/u-SHI-1/mover': { cuerpo: tarea('SHI-1', 'Login', 'e2') },
+    });
+    mostrar();
+
+    const enlace = await screen.findByRole('link', { name: /Login/ });
+    fireEvent.click(enlace);
+    fireEvent.keyDown(enlace, { code: 'Enter', key: 'Enter' });
+    expect(pedidos.filter((p) => p.ruta.endsWith('/mover'))).toHaveLength(0);
+    window.history.replaceState(null, '', '/');
+  });
+
+  it('Space levanta la tarjeta y Escape cancela sin llamar a la API', async () => {
+    const pedidos = simularApi({
+      'POST /api/tarea/paginar': { cuerpo: pagina([tarea('SHI-1', 'Login', 'e1')]) },
+      'POST /api/tarea/u-SHI-1/mover': { cuerpo: tarea('SHI-1', 'Login', 'e2') },
+    });
+    mostrar();
+
+    const enlace = await screen.findByRole('link', { name: /Login/ });
+    fireEvent.keyDown(enlace, { code: 'Space' });
+    fireEvent.keyDown(enlace, { code: 'Escape' });
+    expect(pedidos.filter((p) => p.ruta.endsWith('/mover'))).toHaveLength(0);
+    expect(within(screen.getByRole('region', { name: 'Por hacer' })).getByText('Login')).toBeInTheDocument();
+  });
+
+  it('en el teléfono «Mover a…» persiste el estado con el mismo endpoint', async () => {
+    simularTelefono();
+    const pedidos = simularApi({
+      'POST /api/tarea/paginar': { cuerpo: pagina([tarea('SHI-1', 'Login', 'e1')]) },
+      'POST /api/tarea/u-SHI-1/mover': { cuerpo: tarea('SHI-1', 'Login', 'e2') },
+    });
+    mostrar();
+
+    expect(await screen.findByRole('tab', { name: 'Por hacer 1' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Mover a…' }));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Estado destino para SHI-1' }), { target: { value: 'e2' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Mover' }));
+
+    await waitFor(() => expect(pedidos.some((p) => p.ruta === '/api/tarea/u-SHI-1/mover')).toBe(true));
+    expect(pedidos.find((p) => p.ruta === '/api/tarea/u-SHI-1/mover')?.cuerpo).toEqual({ estadoUuid: 'e2' });
+    expect(await screen.findByRole('status')).toHaveTextContent('SHI-1 pasó a En curso.');
+    expect(await screen.findByRole('tab', { name: 'En curso 1' })).toBeInTheDocument();
+  });
+
+  it('si la API rechaza el movimiento muestra el error y conserva la tarjeta', async () => {
+    simularTelefono();
+    simularApi({
+      'POST /api/tarea/paginar': { cuerpo: pagina([tarea('SHI-1', 'Login', 'e1')]) },
+      'POST /api/tarea/u-SHI-1/mover': error(400, 'ESTADO_DE_OTRO_TABLERO', 'Ese estado no pertenece al tablero.'),
+    });
+    mostrar();
+
+    expect(await screen.findByRole('tab', { name: 'Por hacer 1' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Mover a…' }));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Estado destino para SHI-1' }), { target: { value: 'e2' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Mover' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Ese estado no pertenece al tablero.');
+    expect(screen.getByRole('tab', { name: 'Por hacer 1' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText('Login')).toBeInTheDocument();
   });
 });
