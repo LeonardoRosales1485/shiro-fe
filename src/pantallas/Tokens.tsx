@@ -1,6 +1,7 @@
 // Tokens MCP (T6.4, prototipos "Tokens MCP" y "Generar token"): los tokens de acceso personales del usuario para que
 // su LLM opere Shiro por MCP con sus mismos permisos, también los revocados, con su último uso (propuesta 50). Generar
 // muestra el token una sola vez para copiarlo; revocar lo desactiva al instante. Explica cómo conectar el cliente MCP.
+// MJ-14: cada token vence a los 30, 90 o 180 días elegidos al generarlo; se avisan los que vencen en 7 días o menos.
 import { useEffect, useId, useState } from 'react';
 import { mensajeDeError, pedir } from '../api/cliente';
 import { fecha } from '../componentes/catalogos';
@@ -13,11 +14,44 @@ import { BotonDeAccion } from '../componentes/BotonDeAccion';
 
 type Props = { nombreDelUsuario: string };
 
-// Token en la lista (GET /usuario/mis-tokens): tambien los revocados, con su ultimo uso
-type Token = { uuid: string; nombre: string; activo: boolean; fechaDeCreacion: string | null; fechaDeRevocacion: string | null; ultimoUso: string | null };
+// Token en la lista (GET /usuario/mis-tokens): tambien los revocados, con su ultimo uso y su vencimiento
+type Token = {
+  uuid: string; nombre: string; activo: boolean; fechaDeCreacion: string | null; fechaDeRevocacion: string | null; ultimoUso: string | null;
+  vence: string | null;
+};
 
-// Token recien creado (POST /usuario/crear-token): trae el token en claro una sola vez
-type TokenCreado = { uuid: string; nombre: string; codigo: string | null };
+// Token recien creado (POST /usuario/crear-token-con-vencimiento): trae el token en claro una sola vez y su vencimiento
+type TokenCreado = { uuid: string; nombre: string; codigo: string | null; vence: string | null };
+
+// Vigencias que se pueden elegir al generar un token, en dias (decision D-3: 90 por defecto)
+const VIGENCIAS = [30, 90, 180];
+
+// Dias de anticipacion con que se avisa que un token vence
+const DIAS_DE_AVISO = 7;
+
+const UN_DIA = 24 * 60 * 60 * 1000;
+
+// Dias que le quedan al token (redondeado hacia arriba); 0 o menos si ya vencio. null si no tiene vencimiento
+function diasRestantes(token: { vence: string | null }): number | null {
+  return token.vence ? Math.ceil((new Date(token.vence).getTime() - Date.now()) / UN_DIA) : null;
+}
+
+// Estado del token en la tabla: revocado, vencido, por vencer o activo
+function estado(t: Token): string {
+  if (!t.activo) return `Revocado${t.fechaDeRevocacion ? ` el ${fecha(t.fechaDeRevocacion)}` : ''}`;
+  const dias = diasRestantes(t);
+  if (dias !== null && dias <= 0) return 'Vencido';
+  if (dias !== null && dias <= DIAS_DE_AVISO) return `Vence en ${dias} ${dias === 1 ? 'día' : 'días'}`;
+  return 'Activo';
+}
+
+// Tokens activos que vencen dentro del aviso (y todavia sirven)
+function porVencer(tokens: Token[]): Token[] {
+  return tokens.filter((t) => {
+    const dias = diasRestantes(t);
+    return t.activo && dias !== null && dias > 0 && dias <= DIAS_DE_AVISO;
+  });
+}
 
 // Direccion del servidor MCP de este Shiro (el backend se publica en /api, bajo la misma base que el front)
 const URL_MCP = `${window.location.origin}${import.meta.env.BASE_URL.replace(/\/$/, '')}/api/mcp`;
@@ -60,12 +94,20 @@ export function Tokens({ nombreDelUsuario }: Props) {
       </p>
       {nuevo?.codigo && (
         <div className="ui-alert is-success sh-token-nuevo">
-          <span>{`Token «${nuevo.nombre}» generado. Copialo ahora: no se vuelve a mostrar.`}</span>
+          <span>{`Token «${nuevo.nombre}» generado.${nuevo.vence ? ` Vence el ${fecha(nuevo.vence)}.` : ''} Copialo ahora: no se vuelve a mostrar.`}</span>
           <code className="sh-mono">{nuevo.codigo}</code>
           <button className="ui-btn sm" type="button" onClick={() => copiar(nuevo.codigo ?? '')}>Copiar</button>
         </div>
       )}
       {aviso && <div className="ui-alert is-success" role="status"><span>{aviso}</span></div>}
+      {tokens && porVencer(tokens).map((t) => {
+        const dias = diasRestantes(t);
+        return (
+          <div key={t.uuid} className="ui-alert is-warning">
+            <span>{`«${t.nombre}» vence en ${dias} ${dias === 1 ? 'día' : 'días'}. Generá uno nuevo y cambialo en tu cliente MCP.`}</span>
+          </div>
+        );
+      })}
       <AlertaDeError mensaje={errorDeCarga ? `No se pudieron cargar los tokens. ${errorDeCarga}` : error} />
       <div className="sh-detalle-principal">
         <section className="ui-card sh-tarjeta">
@@ -74,15 +116,16 @@ export function Tokens({ nombreDelUsuario }: Props) {
           {tokens && tokens.length > 0 && (
             <div className="ui-table-wrap">
               <table className="ui-table" aria-label="Tokens">
-                <thead><tr><th>Nombre</th><th>Creado</th><th>Último uso</th><th>Estado</th><th><span className="sh-sr">Acciones</span></th></tr></thead>
+                <thead><tr><th>Nombre</th><th>Creado</th><th>Último uso</th><th>Vence</th><th>Estado</th><th><span className="sh-sr">Acciones</span></th></tr></thead>
                 <tbody>
                   {tokens.map((t) => (
                     <tr key={t.uuid}>
                       <td>{t.nombre}</td>
                       <td>{fecha(t.fechaDeCreacion)}</td>
                       <td>{t.ultimoUso ? fecha(t.ultimoUso, true) : '—'}</td>
-                      <td>{t.activo ? 'Activo' : `Revocado${t.fechaDeRevocacion ? ` el ${fecha(t.fechaDeRevocacion)}` : ''}`}</td>
-                      <td>{t.activo && (
+                      <td>{t.vence ? fecha(t.vence) : '—'}</td>
+                      <td>{estado(t)}</td>
+                      <td>{t.activo && estado(t) !== 'Vencido' && (
                         <button className="ui-btn ghost sm" type="button" aria-label={`Revocar ${t.nombre}`} onClick={() => setARevocar(t)}>Revocar</button>
                       )}</td>
                     </tr>
@@ -96,7 +139,7 @@ export function Tokens({ nombreDelUsuario }: Props) {
           <h2 className="ui-card-title">Conectar tu LLM</h2>
           <p style={{ margin: 0 }}>Agregá Shiro como servidor MCP en tu cliente con esta dirección y el token como clave (encabezado Authorization: Bearer).</p>
           <p style={{ margin: 0 }}>URL: <code className="sh-mono">{URL_MCP}</code></p>
-          <p className="ui-help" style={{ margin: 0 }}>Un token revocado deja de funcionar al instante.</p>
+          <p className="ui-help" style={{ margin: 0 }}>Un token revocado deja de funcionar al instante, y uno vencido también: generá otro antes de que venza.</p>
         </section>
       </div>
       {generando && (
@@ -117,12 +160,14 @@ export function Tokens({ nombreDelUsuario }: Props) {
   );
 }
 
-// Generar un token: pide el nombre (unico entre los tokens del usuario)
+// Generar un token: pide el nombre (unico entre los tokens del usuario) y en cuantos dias vence
 function GenerarTokenModal({ alGenerar, alCerrar }: { alGenerar: (token: TokenCreado) => void; alCerrar: () => void }) {
   const id = useId();
   const [nombre, setNombre] = useState('');
+  const [dias, setDias] = useState(90);
   const { enviando, error, enviar } = useEnvio();
-  const generar = () => enviar(async () => alGenerar(await pedir<TokenCreado>('POST', '/usuario/crear-token', { nombre: nombre.trim() })));
+  const generar = () => enviar(async () => alGenerar(await pedir<TokenCreado>('POST', '/usuario/crear-token-con-vencimiento',
+    { nombre: nombre.trim(), diasDeVigencia: dias })));
   const pie = <>
     <button className="ui-btn ghost" type="button" onClick={alCerrar}>Cancelar</button>
     <BotonDeAccion clase="ui-btn solid" texto="Generar token" enviando={enviando} deshabilitado={!nombre.trim()} alHacerClic={generar} />
@@ -133,6 +178,12 @@ function GenerarTokenModal({ alGenerar, alCerrar }: { alGenerar: (token: TokenCr
         <label className="ui-label" htmlFor={`${id}-n`}>Nombre</label>
         <input id={`${id}-n`} className="ui-input" value={nombre} onChange={(e) => setNombre(e.target.value)} />
         <span className="ui-help">Para reconocerlo en la lista, por ejemplo el cliente o el equipo donde lo usás.</span>
+      </div>
+      <div className="ui-field">
+        <label className="ui-label" htmlFor={`${id}-v`}>Vence en</label>
+        <select id={`${id}-v`} className="ui-select" value={dias} onChange={(e) => setDias(Number(e.target.value))}>
+          {VIGENCIAS.map((v) => <option key={v} value={v}>{`${v} días`}</option>)}
+        </select>
       </div>
       <p className="ui-help" style={{ margin: 0 }}>El token tiene tus mismos permisos, administración incluida. Se muestra una sola vez.</p>
       <AlertaDeError mensaje={error} />
