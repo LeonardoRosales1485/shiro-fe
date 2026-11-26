@@ -4,7 +4,7 @@
 // niega por separado; Editar y Archivar permitidos incluyen Ver. Los Administradores pueden todo.
 import { useEffect, useId, useState } from 'react';
 import { mensajeDeError, pedir } from '../../api/cliente';
-import type { Pagina, ProyectoDTO } from '../../api/tipos';
+import { TOPE_DE_PAGINA, type Pagina, type ProyectoDTO } from '../../api/tipos';
 import { iniciales } from '../../componentes/catalogos';
 import { Icono } from '../../componentes/Icono';
 import { AlertaDeError } from '../../componentes/Modal';
@@ -37,7 +37,7 @@ export function Permisos({ proyectos, grupos, usuarios }: Props) {
     const filtros = [[
       { campo: 'proyecto.uuid', operacion: '=', valor: proyectoUuid }, { campo: 'tablero.proyecto.uuid', operacion: '=', valor: proyectoUuid },
     ]];
-    pedir<Pagina<ReglaDTO>>('POST', '/regla-permiso/paginar', { pagina: 1, tamano: 1000, filtros, ordenes: [] })
+    pedir<Pagina<ReglaDTO>>('POST', '/regla-permiso/paginar', { pagina: 1, tamano: TOPE_DE_PAGINA, filtros, ordenes: [] })
       .then((pagina) => vigente && setReglas({ proyecto: proyectoUuid, lista: pagina.contenido }))
       .catch((e) => vigente && setErrorDeCarga(mensajeDeError(e)));
     return () => {
