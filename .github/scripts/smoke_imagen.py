@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Humo de la imagen del front (MJ-15 del plan de mejoras): espera a que el contenedor sirva la app y verifica que la
-# pagina tenga el punto de montaje de React y que el JavaScript del build responda. Lo usa el job "imagen" de
+# pagina tenga el punto de montaje de React (div raiz) y que el JavaScript del build responda. Lo usa el job "imagen" de
 # .github/workflows/calidad.yml despues de `python deploy/deploy.py --local`.
 # Uso: python .github/scripts/smoke_imagen.py [--url http://localhost:7091/]
 import argparse
@@ -31,7 +31,7 @@ def main() -> int:
     while time.time() < limite:
         try:
             status, html = leer(args.url)
-            if status == 200 and 'id="root"' in html:
+            if status == 200 and 'id="raiz"' in html:
                 break
         except OSError:
             pass
