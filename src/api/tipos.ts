@@ -68,6 +68,8 @@ export type TareaDetalleDTO = {
   hijas: TareaHijaDTO[] | null;
   fechaDeCreacion: string | null;
   fechaDeActualizacion: string | null;
+  // Version para el control de edicion simultanea (sube en cada guardado)
+  version: number;
 };
 
 export type Canal = 'WEB' | 'MCP' | 'IMPORTACION';
