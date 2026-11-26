@@ -37,6 +37,11 @@ jobs:
         run: npm run duplicados
       - name: Build
         run: npm run build
+      # MJ-07: vite preview sirve el build con las cabeceras de seguridad y el humo las lee
+      - name: Cabeceras de seguridad
+        run: |
+          npx vite preview --port 7092 --strictPort > preview.log 2>&1 &
+          node scripts/humo-cabeceras.mjs http://localhost:7092/
       - name: Reporte de cobertura
         if: always()
         uses: actions/upload-artifact@v4
