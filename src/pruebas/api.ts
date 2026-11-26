@@ -82,7 +82,7 @@ export function tareaDetalle(extra: Record<string, unknown> = {}): TareaDetalleD
       { uuid: 'u-SHI-152', clave: 'SHI-152', titulo: 'Secuencia por proyecto', tipoCodigo: 'SUBTAREA', estadoNombre: 'Hecho' },
       { uuid: 'u-SHI-153', clave: 'SHI-153', titulo: 'Prueba de concurrencia', tipoCodigo: 'SUBTAREA', estadoNombre: 'En curso' },
     ],
-    fechaDeCreacion: '2026-11-18T11:05:00.000-03:00', fechaDeActualizacion: '2026-11-18T15:42:00.000-03:00',
+    fechaDeCreacion: '2026-11-18T11:05:00.000-03:00', fechaDeActualizacion: '2026-11-18T15:42:00.000-03:00', version: 7,
     ...extra,
   } as TareaDetalleDTO;
 }

@@ -85,7 +85,7 @@ describe('DetalleDeTarea', () => {
     expect(pedidos.find((p) => p.ruta === '/api/tarea/u-SHI-149/mover')?.cuerpo).toEqual({ estadoUuid: 'e5' });
   });
 
-  it('editar manda la fecha leída y muestra lo guardado', async () => {
+  it('editar manda la versión leída y muestra lo guardado', async () => {
     const pedidos = api({ 'POST /api/tarea/guardar': (cuerpo) => ({ cuerpo: { ...tareaDetalle(), ...(cuerpo as object) } }) });
     mostrar();
 
@@ -98,7 +98,7 @@ describe('DetalleDeTarea', () => {
     const guardado = pedidos.find((p) => p.ruta === '/api/tarea/guardar')?.cuerpo as Record<string, unknown>;
     expect(guardado).toMatchObject({
       uuid: 'u-SHI-149', tableroUuid: 't1', tipoCodigo: 'BUG', titulo: 'Claves repetidas', puntos: 5, prioridad: 'MAS_ALTA',
-      responsableUuid: 'us1', fechaDeActualizacion: '2026-11-18T15:42:00.000-03:00', etiquetas: [{ texto: 'claves' }, { texto: 'concurrencia' }],
+      responsableUuid: 'us1', version: 7, etiquetas: [{ texto: 'claves' }, { texto: 'concurrencia' }],
     });
   });
 

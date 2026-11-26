@@ -63,7 +63,7 @@ async function leerComentarios(uuid: string): Promise<ComentarioDTO[]> {
   return pagina.contenido;
 }
 
-// Cuerpo de /tarea/guardar para editar: todos los datos editables, con la fecha leida para el control de concurrencia
+// Cuerpo de /tarea/guardar para editar: todos los datos editables, con la version leida para el control de concurrencia (MJ-02)
 function cuerpoDeEdicion(tarea: TareaDetalleDTO, cambios: Partial<Cambios>) {
   const etiquetas = cambios.etiquetas === undefined
     ? (tarea.etiquetas ?? []).map((e) => e.texto)
@@ -84,7 +84,7 @@ function cuerpoDeEdicion(tarea: TareaDetalleDTO, cambios: Partial<Cambios>) {
     informanteUuid: tarea.informanteUuid,
     padreUuid: tarea.padreUuid,
     estadoUuid: tarea.estadoUuid,
-    fechaDeActualizacion: tarea.fechaDeActualizacion,
+    version: tarea.version,
   };
 }
 
