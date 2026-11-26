@@ -29,8 +29,11 @@ export type Pagina<T> = { contenido: T[] };
 
 export type Filtro = { campo: string; operacion: string; valor: string };
 
+// Maximo de elementos por pagina que acepta el backend en los /paginar (MJ-16): por encima responde 400
+export const TOPE_DE_PAGINA = 500;
+
 // Pedido de POST /{recurso}/paginar (las paginas empiezan en 1)
-export function pedidoDePaginado(filtros: Filtro[], campoDeOrden: string, tamano = 500) {
+export function pedidoDePaginado(filtros: Filtro[], campoDeOrden: string, tamano = TOPE_DE_PAGINA) {
   return { pagina: 1, tamano, filtros: filtros.length ? [filtros] : [], ordenes: [{ campo: campoDeOrden, direccion: 'asc' }] };
 }
 
